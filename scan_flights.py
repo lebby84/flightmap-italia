@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 import requests
 
 # ================= CONFIGURAZIONE =================
-SCANNER_VERSION = "v4-autopagination"
+SCANNER_VERSION = "v5-ryanair-direct+airlabs"
 AIRLABS_KEY = os.getenv("AIRLABS_KEY", "INCOLLA_QUI_LA_TUA_API_KEY")
 AIRLABS_BASE = "https://airlabs.co/api/v9"
 ITALY_TZ = ZoneInfo("Europe/Rome")
@@ -17,10 +17,17 @@ ITALY_TZ = ZoneInfo("Europe/Rome")
 # Database gratuito pubblico con coordinate/citta di tutti gli aeroporti mondiali (0 token AirLabs!)
 OURAIRPORTS_CSV_URL = "https://davidmegginson.github.io/ourairports-data/airports.csv"
 
+# Header standard per l'API pubblica Ryanair (0 token AirLabs!)
+RYANAIR_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "it-IT,it;q=0.9,en;q=0.8",
+}
+
 # Limite mensile prudenziale di sicurezza (si aggiorna automaticamente col residuo reale di AirLabs)
 MAX_MONTHLY_CALLS = 950
 MIN_RESERVE_CALLS = 15  # Blocca le chiamate se AirLabs segnala <= 15 richieste residue nel mese
-MAX_PAGES_PER_DIRECTION = 40  # Fino a 2.000 voli per direzione se la paginazione offset e attiva
+MAX_PAGES_PER_DIRECTION = 40
 
 # Giorno del mese in cui si azzera il contatore mensile AirLabs (1-28)
 BILLING_RESET_DAY = 1
@@ -37,11 +44,13 @@ AIRPORT_SCHEDULE = {
     "VCE": 30,  # Venezia: ogni 30 giorni
 }
 
-# Compagnie principali per ciascun aeroporto (usate SOLO come fallback se AirLabs blocca offset)
+RYANAIR_CODES = {"FR", "MW", "RK", "LW", "RR"}
+
+# Compagnie principali per ciascun aeroporto (usate come fallback se AirLabs blocca offset)
 AIRPORT_AIRLINES = {
     "BLQ": [
-        "FR", "MW", "RK", "LW", "RR",  # Gruppo Ryanair
-        "W4", "W6", "EC", "U2",        # Wizz Air & easyJet
+        "FR", "MW", "RK", "LW", "RR",
+        "W4", "W6", "EC", "U2",
         "AZ", "EN", "LH", "AF", "KL", "WA", "BA", "IB", "YW", "I2",
         "VY", "V7", "OS", "LX", "SN", "TP", "NI", "SK", "DY", "AY", "EI",
         "TK", "VF", "PC", "A3", "LO", "RO", "JU", "OU", "BT", "NO",
@@ -90,23 +99,14 @@ AIRPORT_AIRLINES = {
     ],
 }
 
-# Rete di recupero destinazioni (usata SOLO se AirLabs blocca la paginazione offset e una compagnia tocca 50 righe)
 CANDIDATE_DESTINATIONS = sorted(set([
-    # Italia
     "BRI", "BDS", "CAG", "CTA", "PMO", "SUF", "TPS", "AHO", "OLB", "LMP", "PNL", "REG", "PSR", "TRS", "NAP", "FCO", "CIA",
-    # UK & Irlanda
     "STN", "LTN", "LGW", "LHR", "MAN", "EDI", "BHX", "BRS", "LBA", "NCL", "EMA", "LPL", "GLA", "BFS", "DUB", "ORK", "SNN",
-    # Spagna & Portogallo
     "MAD", "BCN", "VLC", "SVQ", "AGP", "ALC", "PMI", "IBZ", "MAH", "TFS", "FUE", "ACE", "LPA", "SCQ", "SDR", "ZAZ", "GRX", "GRO", "REU", "LIS", "OPO", "FAO", "FNC",
-    # Francia & Benelux
     "BVA", "CDG", "ORY", "MRS", "TLS", "BOD", "NTE", "LYS", "NCE", "CRL", "BRU", "EIN", "AMS", "LUX",
-    # Germania, Austria, Svizzera, Nordics
     "CGN", "NRN", "BER", "FMM", "NUE", "HHN", "HAM", "DUS", "FRA", "MUC", "VIE", "ZRH", "GVA", "BSL", "CPH", "BLL", "ARN", "NYO", "GOT", "OSL", "HEL",
-    # Polonia & Baltici
     "WAW", "WMI", "KRK", "KTW", "GDN", "WRO", "POZ", "KUN", "VNO", "RIX", "TLL",
-    # Centro-Est Europa & Balcani
     "PRG", "BTS", "BUD", "OTP", "BBU", "CLJ", "IAS", "TSR", "SCV", "CRA", "SBZ", "SOF", "VAR", "TIA", "ZAD", "SPU", "DBV", "PUY", "ZAG", "BEG", "SKP",
-    # Grecia, Cipro, Malta, Turchia, Medio Oriente, Nord Africa
     "ATH", "SKG", "CFU", "RHO", "HER", "CHQ", "JTR", "JMK", "KGS", "ZTH", "EFL", "PVK", "KLX", "PFO", "LCA", "MLA",
     "IST", "SAW", "ADB", "AYT", "AMM", "TLV", "DXB", "AUH", "DOH", "RAK", "FEZ", "TNG", "AGA", "CMN", "TUN", "CAI", "SSH", "RMF", "HRG"
 ]))
@@ -122,7 +122,6 @@ BASE_AIRPORTS = {
     "VCE": {"iata": "VCE", "name": "Venezia Marco Polo", "city": "Venezia", "country": "IT", "lat": 45.5053, "lon": 12.3519, "is_base": True},
 }
 
-# Nomi citta chiari in italiano per gli aeroporti secondari e principali (cosi cercando "Parigi" trovi sia CDG che BVA!)
 CITY_OVERRIDES = {
     "CDG": "Parigi (Charles de Gaulle)",
     "ORY": "Parigi (Orly)",
@@ -209,7 +208,6 @@ CITY_OVERRIDES = {
     "TUN": "Tunisi",
 }
 
-# Unifica le controllate del gruppo Ryanair/easyJet sotto il marchio principale
 DEFAULT_AIRLINES = {
     "FR": "Ryanair", "MW": "Ryanair", "RK": "Ryanair", "LW": "Ryanair", "RR": "Ryanair",
     "U2": "easyJet", "EC": "easyJet", "DS": "easyJet",
@@ -373,6 +371,156 @@ def airlabs_get(endpoint: str, params: dict, state: dict):
     return payload.get("response", []), "OK"
 
 
+# ==================== RYANAIR PUBLIC API (0 TOKEN AIRLABS) ====================
+def ryanair_get_json(urls: list, session: requests.Session):
+    for url in urls:
+        try:
+            resp = session.get(url, headers=RYANAIR_HEADERS, timeout=20)
+            if resp.status_code == 200:
+                return resp.json()
+        except requests.RequestException:
+            continue
+    return None
+
+
+def fetch_ryanair_schedule(orig: str, dest: str, now: datetime, session: requests.Session):
+    """Recupera giorni della settimana (1..7) e orari di partenza da Ryanair per una singola tratta."""
+    days_set = set()
+    times_set = set()
+
+    # Controlla mese corrente e mese successivo cosi copre sempre le prossime 4+ settimane
+    months_to_check = [
+        (now.year, now.month),
+        (now.year + 1, 1) if now.month == 12 else (now.year, now.month + 1),
+    ]
+
+    for y, m in months_to_check:
+        data = ryanair_get_json([
+            f"https://www.ryanair.com/api/timtbl/3/schedules/{orig}/{dest}/years/{y}/months/{m}",
+            f"https://services-api.ryanair.com/timtbl/3/schedules/{orig}/{dest}/years/{y}/months/{m}",
+        ], session)
+        if isinstance(data, dict) and isinstance(data.get("days"), list):
+            for d_obj in data["days"]:
+                day_num = d_obj.get("day")
+                flights = d_obj.get("flights") or []
+                if not day_num or not flights:
+                    continue
+                try:
+                    dt = datetime(y, m, int(day_num))
+                    days_set.add(dt.isoweekday())
+                except ValueError:
+                    continue
+                for fl in flights:
+                    t = (fl.get("departureTime") or "")[:5]
+                    if t and len(times_set) < 5:
+                        times_set.add(t)
+
+    # Fallback leggero: availabilities (lista di date YYYY-MM-DD)
+    if not days_set:
+        avail = ryanair_get_json([
+            f"https://www.ryanair.com/api/farfnd/3/oneWayFares/{orig}/{dest}/availabilities",
+            f"https://services-api.ryanair.com/farfnd/3/oneWayFares/{orig}/{dest}/availabilities",
+        ], session)
+        if isinstance(avail, list):
+            horizon = now.date() + timedelta(days=45)
+            today = now.date()
+            for ds in avail:
+                try:
+                    d = datetime.strptime(str(ds)[:10], "%Y-%m-%d").date()
+                    if today <= d <= horizon:
+                        days_set.add(d.isoweekday())
+                except ValueError:
+                    continue
+
+    return days_set, times_set
+
+
+def fetch_ryanair_routes_for_airport(iata: str, now: datetime, temp_routes: dict, airports_db: dict, discovered_airports: set) -> bool:
+    """Scarica TUTTE le rotte dirette Ryanair da/per l'aeroporto direttamente dall'API pubblica Ryanair (0 token AirLabs)."""
+    session = requests.Session()
+    data = ryanair_get_json([
+        f"https://www.ryanair.com/api/views/locate/searchWidget/routes/it/airport/{iata}",
+        f"https://services-api.ryanair.com/views/locate/searchWidget/routes/it/airport/{iata}",
+        f"https://www.ryanair.com/api/views/locate/searchWidget/routes/en/airport/{iata}",
+    ], session)
+
+    if not isinstance(data, list) or not data:
+        print(f"  [RYANAIR] Nessuna rotta o API pubblica non raggiungibile per {iata} (userò AirLabs).")
+        return False
+
+    direct_dests = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        # Esclude eventuali voli in connessione con scalo
+        if item.get("connectingAirport"):
+            continue
+        arr = item.get("arrivalAirport") or {}
+        dest = (arr.get("code") or "").strip().upper()
+        if not dest or dest == iata:
+            continue
+
+        direct_dests.append(dest)
+        discovered_airports.add(dest)
+
+        # Salva subito anche coordinate e nomi se presenti nella risposta Ryanair
+        coords = arr.get("coordinates") or {}
+        lat = coords.get("latitude")
+        lon = coords.get("longitude")
+        if dest not in BASE_AIRPORTS and lat is not None and lon is not None:
+            city_obj = arr.get("city") or {}
+            country_obj = arr.get("country") or {}
+            ap_name = (arr.get("name") or dest).strip()
+            ap_city = CITY_OVERRIDES.get(dest) or (city_obj.get("name") or ap_name).strip()
+            airports_db[dest] = {
+                "iata": dest,
+                "name": ap_name,
+                "city": ap_city,
+                "country": (country_obj.get("code") or "").strip().upper(),
+                "lat": float(lat),
+                "lon": float(lon),
+                "is_base": False,
+            }
+
+    direct_dests = sorted(set(direct_dests))
+    if not direct_dests:
+        print(f"  [RYANAIR] 0 destinazioni dirette Ryanair per {iata}.")
+        return False
+
+    print(f"  [RYANAIR] Trovate {len(direct_dests)} destinazioni dirette reali per {iata} (0 token AirLabs). Scarico giorni e orari...")
+
+    added_out = 0
+    added_in = 0
+    for dest in direct_dests:
+        # Andata: iata -> dest
+        out_days, out_times = fetch_ryanair_schedule(iata, dest, now, session)
+        if out_days:
+            entry = temp_routes.setdefault((iata, dest), {}).setdefault(
+                "Ryanair",
+                {"name": "Ryanair", "iata": "FR", "days": set(), "sample_times": set()},
+            )
+            entry["days"].update(out_days)
+            entry["sample_times"].update(out_times)
+            added_out += 1
+
+        # Ritorno: dest -> iata
+        in_days, in_times = fetch_ryanair_schedule(dest, iata, now, session)
+        if in_days:
+            entry = temp_routes.setdefault((dest, iata), {}).setdefault(
+                "Ryanair",
+                {"name": "Ryanair", "iata": "FR", "days": set(), "sample_times": set()},
+            )
+            entry["days"].update(in_days)
+            entry["sample_times"].update(in_times)
+            added_in += 1
+
+        time.sleep(0.05)
+
+    print(f"  [RYANAIR OK] {iata}: caricate {added_out} tratte in partenza e {added_in} in arrivo con giorni/orari reali (BVA={'BVA' in direct_dests}, DUB={'DUB' in direct_dests}).")
+    return added_out > 0
+# ==============================================================================
+
+
 def parse_days(raw_days) -> list:
     if not raw_days:
         return [1, 2, 3, 4, 5, 6, 7]
@@ -490,18 +638,21 @@ def row_signature(row: dict) -> tuple:
     )
 
 
-def ingest_rows(rows: list, temp_routes: dict, fallback_cs_routes: dict, discovered_airports: set, state: dict):
+def ingest_rows(rows: list, temp_routes: dict, fallback_cs_routes: dict, discovered_airports: set, state: dict, skip_ryanair: bool = False):
     for row in rows:
         orig = (row.get("dep_iata") or "").upper()
         dest = (row.get("arr_iata") or "").upper()
         if not orig or not dest or orig == dest:
             continue
 
+        is_codeshare = bool(row.get("cs_airline_iata"))
+        al_iata = (row.get("cs_airline_iata") if is_codeshare else row.get("airline_iata") or "").upper()
+        if skip_ryanair and al_iata in RYANAIR_CODES:
+            continue
+
         discovered_airports.add(orig)
         discovered_airports.add(dest)
 
-        is_codeshare = bool(row.get("cs_airline_iata"))
-        al_iata = (row.get("cs_airline_iata") if is_codeshare else row.get("airline_iata") or "").upper()
         al_name = resolve_airline_name(al_iata, state)
         days = parse_days(row.get("days"))
         dep_time = (row.get("dep_time") or "")[:5]
@@ -516,8 +667,7 @@ def ingest_rows(rows: list, temp_routes: dict, fallback_cs_routes: dict, discove
             entry["sample_times"].add(dep_time)
 
 
-def try_paginated_direction(direction_param: dict, label: str, state: dict, temp_routes: dict, fallback_cs_routes: dict, discovered_airports: set):
-    """Prova a paginare con offset=0, 50, 100... Restituisce (ok_complete, calls, raw_rows, discovered_carriers, status)."""
+def try_paginated_direction(direction_param: dict, label: str, state: dict, temp_routes: dict, fallback_cs_routes: dict, discovered_airports: set, skip_ryanair: bool):
     seen_sigs = set()
     discovered_carriers = []
     calls = 0
@@ -539,9 +689,7 @@ def try_paginated_direction(direction_param: dict, label: str, state: dict, temp
 
         calls += 1
         if not rows:
-            # Pagina vuota dopo almeno una pagina con <50 o fine reale
             if page == 1 and len(seen_sigs) >= 50:
-                # AirLabs potrebbe aver bloccato offset=50 restituendo [] sul piano free
                 print(f"  [PAGINAZIONE] {label}: offset=50 vuoto -> paginazione non attiva su piano Free.")
                 return False, calls, raw_rows, discovered_carriers, "NO_PAGINATION"
             return True, calls, raw_rows, discovered_carriers, "OK"
@@ -553,7 +701,7 @@ def try_paginated_direction(direction_param: dict, label: str, state: dict, temp
 
         seen_sigs.update(new_sigs)
         raw_rows += len(rows)
-        ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state)
+        ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state, skip_ryanair=skip_ryanair)
         for r in rows:
             for k in ("airline_iata", "cs_airline_iata"):
                 c = (r.get(k) or "").upper()
@@ -566,20 +714,22 @@ def try_paginated_direction(direction_param: dict, label: str, state: dict, temp
 
         time.sleep(0.18)
 
-    print(f"  [PAGINAZIONE] {label}: raggiunto tetto di {MAX_PAGES_PER_DIRECTION} pagine ({raw_rows} voli).")
     return True, calls, raw_rows, discovered_carriers, "OK"
 
 
-def scan_airport_routes(iata: str, state: dict, routes_index: dict, discovered_airports: set):
-    """Strategia a 2 livelli: prima tenta paginazione diretta (pochissime chiamate), poi fallback compagnia+tratte."""
+def scan_airport_routes(iata: str, now: datetime, state: dict, routes_index: dict, airports_db: dict, discovered_airports: set):
+    """Combina API diretta Ryanair (0 token AirLabs, 100% completa) + AirLabs per tutte le altre compagnie."""
     temp_routes = {}
     fallback_cs_routes = {}
     calls_made = 0
     raw_rows_total = 0
 
-    # LIVELLO 1: Prova paginazione diretta su partenze e arrivi (se funziona, fa 100% delle rotte in ~15 chiamate!)
+    # 0) Scarica TUTTE le rotte Ryanair direttamente da Ryanair (0 token AirLabs!)
+    ryanair_direct_ok = fetch_ryanair_routes_for_airport(iata, now, temp_routes, airports_db, discovered_airports)
+
+    # 1) AirLabs per tutte le altre compagnie (o anche Ryanair se l'API Ryanair non fosse raggiungibile)
     dep_ok, c1, r1, carriers1, st1 = try_paginated_direction(
-        {"dep_iata": iata}, f"{iata} partenze", state, temp_routes, fallback_cs_routes, discovered_airports
+        {"dep_iata": iata}, f"{iata} partenze", state, temp_routes, fallback_cs_routes, discovered_airports, skip_ryanair=ryanair_direct_ok
     )
     calls_made += c1
     raw_rows_total += r1
@@ -587,22 +737,25 @@ def scan_airport_routes(iata: str, state: dict, routes_index: dict, discovered_a
         return "QUOTA_EXCEEDED"
 
     arr_ok, c2, r2, carriers2, st2 = try_paginated_direction(
-        {"arr_iata": iata}, f"{iata} arrivi", state, temp_routes, fallback_cs_routes, discovered_airports
+        {"arr_iata": iata}, f"{iata} arrivi", state, temp_routes, fallback_cs_routes, discovered_airports, skip_ryanair=ryanair_direct_ok
     )
     calls_made += c2
     raw_rows_total += r2
     if st2 == "QUOTA_EXCEEDED":
         return "QUOTA_EXCEEDED"
 
-    # LIVELLO 2 (solo se la paginazione offset non e supportata sul piano Free): per compagnia + recupero alfabetico
+    # 2) Fallback per compagnia se la paginazione AirLabs e bloccata sul piano Free
     if not (dep_ok and arr_ok):
-        print(f"  [FALLBACK] Uso scansione per compagnia + recupero tratte tagliate su {iata}...")
+        print(f"  [FALLBACK AIRLABS] Scansione per compagnia su {iata} (skip Ryanair={ryanair_direct_ok})...")
         discovered_carriers = list(AIRPORT_AIRLINES.get(iata, []))
         seen_carriers = set(discovered_carriers)
         for c in carriers1 + carriers2:
             if c not in seen_carriers:
                 seen_carriers.add(c)
                 discovered_carriers.append(c)
+
+        if ryanair_direct_ok:
+            discovered_carriers = [c for c in discovered_carriers if c not in RYANAIR_CODES]
 
         active_carriers = []
         capped_cutoffs = []
@@ -620,13 +773,13 @@ def scan_airport_routes(iata: str, state: dict, routes_index: dict, discovered_a
                 if rows:
                     active_carriers.append(carrier)
                     raw_rows_total += len(rows)
-                    ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state)
+                    ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state, skip_ryanair=ryanair_direct_ok)
                     if len(rows) >= 50:
                         dests = sorted({(r.get("arr_iata") or "").upper() for r in rows if r.get("arr_iata")})
                         if dests:
                             capped_cutoffs.append(dests[-1])
                             print(f"  [CAP 50] {iata} - {carrier} tagliato alla destinazione '{dests[-1]}'.")
-            time.sleep(0.15)
+            time.sleep(0.14)
 
         for carrier in active_carriers:
             rows, status = airlabs_get(
@@ -639,33 +792,26 @@ def scan_airport_routes(iata: str, state: dict, routes_index: dict, discovered_a
             if status == "OK" and isinstance(rows, list) and rows:
                 calls_made += 1
                 raw_rows_total += len(rows)
-                ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state)
-            time.sleep(0.15)
+                ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state, skip_ryanair=ryanair_direct_ok)
+            time.sleep(0.14)
 
-        # Recupero mirato: controlla TUTTE le destinazioni candidate >= minimo cutoff (NON salta STN, MAD, CTA, PMO!)
         if capped_cutoffs:
             min_cutoff = min(capped_cutoffs)
             to_check = [d for d in CANDIDATE_DESTINATIONS if d != iata and d >= min_cutoff]
             print(f"  [RECUPERO] Controllo {len(to_check)} destinazioni candidate >= '{min_cutoff}' per {iata}...")
-            recovered_new = 0
             for dest in to_check:
-                was_present = (iata, dest) in temp_routes
                 rows, status = airlabs_get(
                     "routes",
                     {"dep_iata": iata, "arr_iata": dest, "_fields": "airline_iata,cs_airline_iata,dep_iata,arr_iata,dep_time,days"},
                     state,
                 )
                 if status == "QUOTA_EXCEEDED":
-                    print(f"  [BLOCCO QUOTA] Recupero fermato dopo {recovered_new} nuove destinazioni su {iata}.")
                     break
                 if status == "OK" and isinstance(rows, list):
                     calls_made += 1
                     if rows:
                         raw_rows_total += len(rows)
-                        if not was_present:
-                            recovered_new += 1
-                        ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state)
-                        # Scarica anche il ritorno
+                        ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state, skip_ryanair=ryanair_direct_ok)
                         ret_rows, ret_status = airlabs_get(
                             "routes",
                             {"dep_iata": dest, "arr_iata": iata, "_fields": "airline_iata,cs_airline_iata,dep_iata,arr_iata,dep_time,days"},
@@ -676,18 +822,15 @@ def scan_airport_routes(iata: str, state: dict, routes_index: dict, discovered_a
                         if ret_status == "OK" and isinstance(ret_rows, list) and ret_rows:
                             calls_made += 1
                             raw_rows_total += len(ret_rows)
-                            ingest_rows(ret_rows, temp_routes, fallback_cs_routes, discovered_airports, state)
+                            ingest_rows(ret_rows, temp_routes, fallback_cs_routes, discovered_airports, state, skip_ryanair=ryanair_direct_ok)
                 time.sleep(0.14)
-            print(f"  [RECUPERO] Scoperte {recovered_new} nuove destinazioni per {iata} (e integrate quelle parziali).")
 
-    # Integra eventuali rotte viste solo come codeshare
     for pair, airlines_dict in fallback_cs_routes.items():
         dest_airlines = temp_routes.setdefault(pair, {})
         for al_key, al_val in airlines_dict.items():
             if al_key not in dest_airlines:
                 dest_airlines[al_key] = al_val
 
-    # Aggiorna solo le rotte di questo aeroporto, preservando gli altri 7
     for k in [k for k in routes_index if k[0] == iata or k[1] == iata]:
         del routes_index[k]
 
@@ -708,13 +851,13 @@ def scan_airport_routes(iata: str, state: dict, routes_index: dict, discovered_a
 
     out_dests = sorted({d for (o, d) in temp_routes if o == iata})
     in_origs = sorted({o for (o, d) in temp_routes if d == iata})
-    print(f"[INFO] {iata}: {calls_made} chiamate totali, {raw_rows_total} voli -> {len(out_dests)} destinazioni in partenza, {len(in_origs)} in arrivo.")
+    print(f"[INFO] {iata}: {calls_made} chiamate AirLabs, {len(out_dests)} destinazioni in partenza, {len(in_origs)} in arrivo.")
     print(f"[CHECK] {iata} contiene DUB={'DUB' in out_dests}, BVA={'BVA' in out_dests}, STN={'STN' in out_dests}, MAD={'MAD' in out_dests}")
     return "OK"
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Scansione rotte AirLabs per FlightMap Italia")
+    parser = argparse.ArgumentParser(description="Scansione rotte per FlightMap Italia")
     parser.add_argument(
         "--airport",
         default=os.getenv("TARGET_AIRPORT", "AUTO"),
@@ -772,8 +915,8 @@ def main():
     else:
         print(f"[SCAN] Aeroporti in coda: {', '.join(to_scan)}")
         for code in to_scan:
-            print(f"[SCAN] Avvio scaricamento rotte AirLabs per {code}...")
-            status = scan_airport_routes(code, state, routes_index, discovered_airports)
+            print(f"[SCAN] Avvio scaricamento rotte per {code}...")
+            status = scan_airport_routes(code, now, state, routes_index, airports_db, discovered_airports)
             if status == "QUOTA_EXCEEDED":
                 print(f"[BLOCCO QUOTA] Fermato su {code}: {state['blocked_reason']}")
                 break
