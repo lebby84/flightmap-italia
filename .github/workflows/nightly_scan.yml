@@ -3,7 +3,29 @@ name: Nightly Flight Scan (AirLabs)
 on:
   schedule:
     - cron: '0 2 * * *' # Ogni notte alle 02:00 UTC (03:00 ora italiana solare)
-  workflow_dispatch:     # Permette l'avvio manuale con un clic da GitHub Actions
+  workflow_dispatch:
+    inputs:
+      airport:
+        description: 'Quale aeroporto sincronizzare? (AUTO = BLQ ogni 7gg, altri ogni 30gg)'
+        required: true
+        default: 'BLQ'
+        type: choice
+        options:
+          - BLQ
+          - VRN
+          - BGY
+          - FLR
+          - TSF
+          - LIN
+          - MXP
+          - VCE
+          - AUTO
+          - ALL
+      force:
+        description: 'Forza aggiornamento anche se gia scansionato di recente (vale per AUTO)'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -26,6 +48,8 @@ jobs:
       - name: Esegui scansione voli AirLabs
         env:
           AIRLABS_KEY: ${{ secrets.AIRLABS_KEY }}
+          TARGET_AIRPORT: ${{ github.event.inputs.airport || 'AUTO' }}
+          FORCE_RESCAN: ${{ github.event.inputs.force || 'false' }}
         run: python scan_flights.py
 
       - name: Salva routes.json e quota_state.json nel repository
@@ -33,5 +57,5 @@ jobs:
           git config user.name "FlightMap Bot"
           git config user.email "bot@users.noreply.github.com"
           git add routes.json quota_state.json
-          git diff --staged --quiet || git commit -m "Aggiornamento notturno rotte AirLabs"
+          git diff --staged --quiet || git commit -m "Aggiornamento rotte AirLabs (${{ github.event.inputs.airport || 'AUTO' }})"
           git push
