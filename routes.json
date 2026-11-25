@@ -1,13 +1,14 @@
 {
-  "generated_at": "2026-11-25T08:56:39",
+  "generated_at": "2026-11-25T10:02:19",
   "quota_status": {
     "cycle": "2026-11",
-    "units_used": 28,
-    "units_limit": 900,
+    "units_used": 0,
+    "units_limit": 944,
+    "remote_remaining": 1000,
     "blocked": false,
     "reason": null,
     "last_scan_by_airport": {
-      "BLQ": "2026-11-25T08:56:39",
+      "BLQ": "2026-11-25T10:02:19",
       "VRN": "2026-11-25T08:56:39",
       "BGY": "2026-11-25T08:56:39",
       "FLR": "2026-11-25T08:56:39",
@@ -308,269 +309,6 @@
     }
   },
   "routes": [
-    {
-      "from": "BLQ",
-      "to": "ACE",
-      "airlines": [
-        {
-          "name": "Ryanair",
-          "iata": "FR",
-          "days": [
-            4
-          ],
-          "sample_times": [
-            "12:30"
-          ]
-        }
-      ]
-    },
-    {
-      "from": "BLQ",
-      "to": "AGP",
-      "airlines": [
-        {
-          "name": "MW",
-          "iata": "MW",
-          "days": [
-            3,
-            4,
-            5,
-            7
-          ],
-          "sample_times": [
-            "05:45",
-            "11:25",
-            "15:50",
-            "17:05"
-          ]
-        },
-        {
-          "name": "Ryanair",
-          "iata": "FR",
-          "days": [
-            1
-          ],
-          "sample_times": [
-            "15:05"
-          ]
-        }
-      ]
-    },
-    {
-      "from": "BLQ",
-      "to": "AHO",
-      "airlines": [
-        {
-          "name": "MW",
-          "iata": "MW",
-          "days": [
-            2,
-            3,
-            4,
-            5,
-            7
-          ],
-          "sample_times": [
-            "09:25",
-            "11:10",
-            "11:25",
-            "14:10"
-          ]
-        }
-      ]
-    },
-    {
-      "from": "BLQ",
-      "to": "AMS",
-      "airlines": [
-        {
-          "name": "KLM",
-          "iata": "KL",
-          "days": [
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7
-          ],
-          "sample_times": [
-            "13:00"
-          ]
-        },
-        {
-          "name": "KLM Cityhopper",
-          "iata": "WA",
-          "days": [
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7
-          ],
-          "sample_times": [
-            "06:35",
-            "13:00",
-            "17:10"
-          ]
-        }
-      ]
-    },
-    {
-      "from": "BLQ",
-      "to": "ARW",
-      "airlines": [
-        {
-          "name": "Wizz Air Malta",
-          "iata": "W4",
-          "days": [
-            4,
-            7
-          ],
-          "sample_times": [
-            "07:10",
-            "16:50"
-          ]
-        }
-      ]
-    },
-    {
-      "from": "BLQ",
-      "to": "ATH",
-      "airlines": [
-        {
-          "name": "Aegean Airlines",
-          "iata": "A3",
-          "days": [
-            1,
-            2,
-            3,
-            4,
-            5,
-            7
-          ],
-          "sample_times": [
-            "10:20",
-            "10:30"
-          ]
-        }
-      ]
-    },
-    {
-      "from": "ACE",
-      "to": "BLQ",
-      "airlines": [
-        {
-          "name": "Ryanair",
-          "iata": "FR",
-          "days": [
-            4
-          ],
-          "sample_times": [
-            "07:10"
-          ]
-        }
-      ]
-    },
-    {
-      "from": "AGP",
-      "to": "BLQ",
-      "airlines": [
-        {
-          "name": "MW",
-          "iata": "MW",
-          "days": [
-            3,
-            4,
-            5,
-            7
-          ],
-          "sample_times": [
-            "09:25",
-            "14:45",
-            "19:10",
-            "20:25"
-          ]
-        },
-        {
-          "name": "Ryanair",
-          "iata": "FR",
-          "days": [
-            1
-          ],
-          "sample_times": [
-            "12:05"
-          ]
-        }
-      ]
-    },
-    {
-      "from": "AHO",
-      "to": "BLQ",
-      "airlines": [
-        {
-          "name": "MW",
-          "iata": "MW",
-          "days": [
-            2,
-            3,
-            4,
-            5,
-            7
-          ],
-          "sample_times": [
-            "11:05",
-            "12:50",
-            "13:05",
-            "15:50"
-          ]
-        }
-      ]
-    },
-    {
-      "from": "AMS",
-      "to": "BLQ",
-      "airlines": [
-        {
-          "name": "KLM",
-          "iata": "KL",
-          "days": [
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7
-          ],
-          "sample_times": [
-            "10:30"
-          ]
-        },
-        {
-          "name": "KLM Cityhopper",
-          "iata": "WA",
-          "days": [
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7
-          ],
-          "sample_times": [
-            "10:30",
-            "14:40",
-            "21:15",
-            "21:20"
-          ]
-        }
-      ]
-    },
     {
       "from": "VRN",
       "to": "AMS",
@@ -2606,6 +2344,287 @@
             "07:30",
             "11:45",
             "17:55"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BLQ",
+      "to": "ACE",
+      "airlines": [
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            4
+          ],
+          "sample_times": [
+            "12:30"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BLQ",
+      "to": "AGP",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            3,
+            4,
+            5,
+            7
+          ],
+          "sample_times": [
+            "05:45",
+            "11:25",
+            "15:50",
+            "17:05"
+          ]
+        },
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            1
+          ],
+          "sample_times": [
+            "15:05"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BLQ",
+      "to": "AHO",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            2,
+            3,
+            4,
+            5,
+            7
+          ],
+          "sample_times": [
+            "09:25",
+            "11:10",
+            "11:25",
+            "14:10"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BLQ",
+      "to": "AMS",
+      "airlines": [
+        {
+          "name": "KLM",
+          "iata": "KL",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "13:00"
+          ]
+        },
+        {
+          "name": "KLM Cityhopper",
+          "iata": "WA",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "06:35",
+            "13:00",
+            "17:10"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BLQ",
+      "to": "ARW",
+      "airlines": [
+        {
+          "name": "Wizz Air Malta",
+          "iata": "W4",
+          "days": [
+            4,
+            7
+          ],
+          "sample_times": [
+            "07:10",
+            "16:50"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BLQ",
+      "to": "ATH",
+      "airlines": [
+        {
+          "name": "Aegean Airlines",
+          "iata": "A3",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7
+          ],
+          "sample_times": [
+            "10:20",
+            "10:30"
+          ]
+        },
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            1,
+            2,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "05:55",
+            "07:20",
+            "19:00",
+            "19:05"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "ACE",
+      "to": "BLQ",
+      "airlines": [
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            4
+          ],
+          "sample_times": [
+            "07:10"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AGP",
+      "to": "BLQ",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            3,
+            4,
+            5,
+            7
+          ],
+          "sample_times": [
+            "09:25",
+            "14:45",
+            "19:10",
+            "20:25"
+          ]
+        },
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            1
+          ],
+          "sample_times": [
+            "12:05"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AHO",
+      "to": "BLQ",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            2,
+            3,
+            4,
+            5,
+            7
+          ],
+          "sample_times": [
+            "11:05",
+            "12:50",
+            "13:05",
+            "15:50"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AMS",
+      "to": "BLQ",
+      "airlines": [
+        {
+          "name": "KLM",
+          "iata": "KL",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "10:30"
+          ]
+        },
+        {
+          "name": "KLM Cityhopper",
+          "iata": "WA",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "10:30",
+            "14:40",
+            "21:15",
+            "21:20"
           ]
         }
       ]
