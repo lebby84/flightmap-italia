@@ -9,7 +9,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    #map { height: 100%; width: 100%; z-index: 1; }
+    #map { height: 100%; width: 100%; z-index: 1; background: #0f172a; }
+    .dark-tiles { filter: invert(100%) hue-rotate(180deg) brightness(92%) contrast(88%) saturate(70%); }
     .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: transparent; }
     .custom-scroll::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.45); border-radius: 999px; }
@@ -340,11 +341,11 @@ let state = {
 const map = L.map("map", { center: [46.5, 11.2], zoom: 5, zoomControl: false, minZoom: 3, maxZoom: 12 });
 L.control.zoom({ position: "bottomleft" }).addTo(map);
 
-const tileDark = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-  attribution: "&copy; OpenStreetMap &copy; CARTO", subdomains: "abcd", maxZoom: 19
+const tileDark = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution: "&copy; OpenStreetMap contributors", maxZoom: 19, className: "dark-tiles"
 });
-const tileLight = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-  attribution: "&copy; OpenStreetMap &copy; CARTO", subdomains: "abcd", maxZoom: 19
+const tileLight = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution: "&copy; OpenStreetMap contributors", maxZoom: 19
 });
 tileDark.addTo(map);
 
