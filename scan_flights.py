@@ -5,23 +5,25 @@ import json
 import os
 import time
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 import requests
 
 # ================= CONFIGURAZIONE =================
 AIRLABS_KEY = os.getenv("AIRLABS_KEY", "INCOLLA_QUI_LA_TUA_API_KEY")
 AIRLABS_BASE = "https://airlabs.co/api/v9"
+ITALY_TZ = ZoneInfo("Europe/Rome")
 
 # Database gratuito pubblico con coordinate/citta di tutti gli aeroporti mondiali (0 chiamate AirLabs!)
 OURAIRPORTS_CSV_URL = "https://davidmegginson.github.io/ourairports-data/airports.csv"
 
-# Limite mensile prudenziale di sicurezza (viene aggiornato anche leggendo il residuo reale di AirLabs)
-MAX_MONTHLY_CALLS = 900
-MIN_RESERVE_CALLS = 15  # Ferma le chiamate se AirLabs segnala meno di 15 richieste residue nel mese
+# Limite mensile prudenziale di sicurezza (viene aggiornato automaticamente con i dati reali di AirLabs)
+MAX_MONTHLY_CALLS = 950
+MIN_RESERVE_CALLS = 15  # Blocca le chiamate se AirLabs segnala <= 15 richieste residue nel mese
 
 # Giorno del mese in cui si azzera il contatore mensile AirLabs (1-28)
 BILLING_RESET_DAY = 1
 
-# Frequenza automatica (modalita AUTO): Bologna ogni settimana, gli altri 7 ogni 30 giorni
+# Frequenza automatica (modalita AUTO): Bologna ogni 7 giorni, gli altri 7 ogni 30 giorni
 AIRPORT_SCHEDULE = {
     "BLQ": 7,   # Bologna: ogni 7 giorni
     "VRN": 30,  # Verona: ogni 30 giorni
@@ -33,8 +35,58 @@ AIRPORT_SCHEDULE = {
     "VCE": 30,  # Venezia: ogni 30 giorni
 }
 
-# Limite di sicurezza pagine per direzione (50 voli/pagina sul piano free -> 25 pagine = 1.250 voli)
-MAX_PAGES_PER_DIRECTION = int(os.getenv("MAX_PAGES_PER_DIRECTION", "25"))
+# Compagnie principali per ciascun aeroporto base (aggira il tetto di 50 righe/chiamata del piano free AirLabs)
+AIRPORT_AIRLINES = {
+    "BLQ": [
+        "FR", "MW", "RK", "LW", "RR",  # Gruppo Ryanair (DAC, Malta Air, UK, Lauda, Buzz)
+        "W4", "W6", "EC", "U2",        # Wizz Air & easyJet
+        "AZ", "EN", "LH", "AF", "KL", "WA", "BA", "IB", "YW", "I2",  # Major europee
+        "VY", "V7", "OS", "LX", "SN", "TP", "SK", "DY", "AY", "EI",  # Altre europee
+        "TK", "VF", "PC", "A3", "LO", "RO", "JU", "OU", "BT", "NO",  # Est Europa / Medio Oriente / Charter
+        "EW", "HV", "TO", "EK", "QR", "FZ", "MS", "AT", "3O", "TU", "KM", "XZ", "XQ", "CA"
+    ],
+    "VRN": [
+        "FR", "MW", "RK", "LW", "EN", "LH", "V7", "NO", "LS", "BY",
+        "U2", "EC", "W4", "W6", "AZ", "BA", "EI", "AF", "KL", "WA",
+        "HV", "EW", "DE", "X3", "OS", "TK", "SM", "MS", "RO", "XZ"
+    ],
+    "BGY": [
+        "FR", "MW", "RK", "LW", "RR", "W4", "W6", "EC", "U2",
+        "DY", "D8", "NO", "EW", "PC", "VF", "3O", "AT", "FZ", "EY", "QR",
+        "MS", "SM", "RO", "H4", "BT", "AZ", "V7", "LS", "XQ", "XC"
+    ],
+    "FLR": [
+        "AZ", "EN", "LH", "AF", "KL", "WA", "BA", "IB", "YW", "VY",
+        "V7", "LX", "2L", "OS", "SN", "TP", "SK", "A3", "LO", "RO",
+        "KM", "LG", "U2", "EC", "W4", "W6", "TK", "QR"
+    ],
+    "TSF": [
+        "FR", "MW", "RK", "LW", "RR", "W4", "W6", "U2", "EC", "V7"
+    ],
+    "LIN": [
+        "AZ", "EC", "U2", "LH", "EN", "AF", "KL", "WA", "BA", "IB",
+        "I2", "YW", "LX", "OS", "SN", "SK", "SL", "TP", "AY", "EI",
+        "A3", "KM", "LG", "DX", "HV", "V3", "ZQ", "XZ"
+    ],
+    "MXP": [
+        "EC", "U2", "FR", "MW", "RK", "LW", "W4", "W6", "W9",
+        "AZ", "NO", "LH", "EN", "AF", "KL", "WA", "BA", "IB", "I2", "VY",
+        "OS", "LX", "SN", "TP", "SK", "DY", "AY", "EI", "A3", "GQ",
+        "LO", "QS", "UX", "EW", "4Y", "DE", "HV", "TO", "LS",
+        "TK", "VF", "PC", "XQ", "EK", "QR", "EY", "FZ", "SV", "G9", "WY", "RJ",
+        "MS", "SM", "AT", "3O", "TU", "BJ", "ET", "RO", "JU", "OU", "BT", "FI", "LY",
+        "CA", "MU", "HU", "CX", "SQ", "TG", "KE", "JL", "NH", "BR", "VN",
+        "DL", "UA", "AA", "AC", "LA", "AI", "HY", "KC", "A9", "J2"
+    ],
+    "VCE": [
+        "FR", "MW", "RK", "LW", "RR", "EC", "U2", "W4", "W6", "V7",
+        "AZ", "LH", "EN", "AF", "KL", "WA", "BA", "IB", "I2", "YW", "VY",
+        "OS", "LX", "SN", "TP", "SK", "DY", "AY", "EI", "A3", "LO",
+        "RO", "JU", "OU", "BT", "EW", "HV", "TO", "LS", "BY",
+        "TK", "VF", "PC", "XQ", "EK", "QR", "SV", "MS", "AT", "TU",
+        "DL", "UA", "AA", "AC", "TS", "KE", "CA", "NO"
+    ],
+}
 
 BASE_AIRPORTS = {
     "BLQ": {"iata": "BLQ", "name": "Bologna Guglielmo Marconi", "city": "Bologna", "country": "IT", "lat": 44.5354, "lon": 11.2887, "is_base": True},
@@ -47,38 +99,37 @@ BASE_AIRPORTS = {
     "VCE": {"iata": "VCE", "name": "Venezia Marco Polo", "city": "Venezia", "country": "IT", "lat": 45.5053, "lon": 12.3519, "is_base": True},
 }
 
-# Cache compagnie piu comuni per evitare chiamate /airlines inutili
 DEFAULT_AIRLINES = {
-    "FR": "Ryanair", "RK": "Ryanair UK", "LW": "Lauda Europe", "RR": "Buzz",
+    "FR": "Ryanair", "MW": "Ryanair (Malta Air)", "RK": "Ryanair UK",
+    "LW": "Ryanair (Lauda)", "RR": "Ryanair (Buzz)",
     "U2": "easyJet", "EC": "easyJet Europe", "DS": "easyJet Switzerland",
     "W6": "Wizz Air", "W4": "Wizz Air Malta", "W9": "Wizz Air UK",
     "AZ": "ITA Airways", "LH": "Lufthansa", "EN": "Air Dolomiti", "CL": "Lufthansa CityLine",
-    "AF": "Air France", "KL": "KLM", "BA": "British Airways", "IB": "Iberia",
-    "I2": "Iberia Express", "YW": "Air Nostrum", "VY": "Vueling", "V7": "Volotea",
-    "OS": "Austrian Airlines", "LX": "SWISS", "2L": "Helvetic Airways",
-    "SN": "Brussels Airlines", "TP": "TAP Air Portugal", "SK": "SAS",
-    "DY": "Norwegian", "D8": "Norwegian Air Sweden", "AY": "Finnair",
-    "EI": "Aer Lingus", "TK": "Turkish Airlines", "VF": "AJet", "PC": "Pegasus Airlines",
-    "A3": "Aegean Airlines", "GQ": "Sky Express", "LO": "LOT Polish Airlines",
-    "OK": "Czech Airlines", "QS": "Smartwings", "UX": "Air Europa", "NO": "Neos",
-    "EW": "Eurowings", "4Y": "Discover Airlines", "DE": "Condor", "X3": "TUI fly",
-    "HV": "Transavia", "TO": "Transavia France", "LS": "Jet2.com", "BY": "TUI Airways",
-    "EK": "Emirates", "QR": "Qatar Airways", "EY": "Etihad Airways", "FZ": "flydubai",
-    "MS": "EgyptAir", "SM": "Air Cairo", "AT": "Royal Air Maroc", "3O": "Air Arabia Maroc",
-    "TU": "Tunisair", "BJ": "Nouvelair", "RO": "TAROM", "H4": "HiSky", "0B": "Blue Air",
-    "JU": "Air Serbia", "OU": "Croatia Airlines", "BT": "airBaltic", "LG": "Luxair",
-    "KM": "KM Malta Airlines", "CY": "Cyprus Airways", "FB": "Bulgaria Air",
-    "FI": "Icelandair", "OG": "PLAY", "LY": "El Al", "RJ": "Royal Jordanian",
-    "SV": "Saudia", "G9": "Air Arabia", "WY": "Oman Air", "CA": "Air China",
-    "MU": "China Eastern", "HU": "Hainan Airlines", "CX": "Cathay Pacific",
+    "AF": "Air France", "KL": "KLM", "WA": "KLM Cityhopper",
+    "BA": "British Airways", "IB": "Iberia", "I2": "Iberia Express", "YW": "Air Nostrum",
+    "VY": "Vueling", "V7": "Volotea", "OS": "Austrian Airlines", "LX": "SWISS",
+    "2L": "Helvetic Airways", "SN": "Brussels Airlines", "TP": "TAP Air Portugal",
+    "SK": "SAS", "SL": "SAS Connect", "DY": "Norwegian", "D8": "Norwegian Air Sweden",
+    "AY": "Finnair", "EI": "Aer Lingus", "TK": "Turkish Airlines", "VF": "AJet",
+    "PC": "Pegasus Airlines", "A3": "Aegean Airlines", "GQ": "Sky Express",
+    "LO": "LOT Polish Airlines", "OK": "Czech Airlines", "QS": "Smartwings",
+    "UX": "Air Europa", "NO": "Neos", "EW": "Eurowings", "4Y": "Discover Airlines",
+    "DE": "Condor", "X3": "TUI fly", "HV": "Transavia", "TO": "Transavia France",
+    "LS": "Jet2.com", "BY": "TUI Airways", "EK": "Emirates", "QR": "Qatar Airways",
+    "EY": "Etihad Airways", "FZ": "flydubai", "MS": "EgyptAir", "SM": "Air Cairo",
+    "AT": "Royal Air Maroc", "3O": "Air Arabia Maroc", "TU": "Tunisair", "BJ": "Nouvelair",
+    "RO": "TAROM", "H4": "HiSky", "JU": "Air Serbia", "OU": "Croatia Airlines",
+    "BT": "airBaltic", "LG": "Luxair", "KM": "KM Malta Airlines", "CY": "Cyprus Airways",
+    "FB": "Bulgaria Air", "FI": "Icelandair", "OG": "PLAY", "LY": "El Al",
+    "RJ": "Royal Jordanian", "SV": "Saudia", "G9": "Air Arabia", "WY": "Oman Air",
+    "CA": "Air China", "MU": "China Eastern", "HU": "Hainan Airlines", "CX": "Cathay Pacific",
     "SQ": "Singapore Airlines", "TG": "Thai Airways", "KE": "Korean Air",
     "JL": "Japan Airlines", "NH": "ANA", "BR": "EVA Air", "VN": "Vietnam Airlines",
     "DL": "Delta Air Lines", "UA": "United Airlines", "AA": "American Airlines",
     "AC": "Air Canada", "TS": "Air Transat", "LA": "LATAM Airlines", "ET": "Ethiopian Airlines",
-    "U6": "Ural Airlines", "PS": "Ukraine Intl", "5F": "FlyOne", "4O": "Interjet",
-    "XQ": "SunExpress", "XC": "Corendon Airlines", "MT": "Malta MedAir", "XZ": "AeroItalia",
-    "2A": "Deutsche Bahn", "B2": "Belavia", "A9": "Georgian Airways", "J2": "Azerbaijan Airlines",
-    "HY": "Uzbekistan Airways", "KC": "Air Astana", "AI": "Air India",
+    "5F": "FlyOne", "XQ": "SunExpress", "XC": "Corendon Airlines", "XZ": "AeroItalia",
+    "DX": "DAT", "V3": "Carpatair", "ZQ": "German Airways", "A9": "Georgian Airways",
+    "J2": "Azerbaijan Airlines", "HY": "Uzbekistan Airways", "KC": "Air Astana", "AI": "Air India",
 }
 
 DAY_MAP = {
@@ -141,8 +192,7 @@ def load_state(now: datetime) -> dict:
 
 
 def airlabs_get(endpoint: str, params: dict, state: dict):
-    """Esegue una chiamata GET ad AirLabs con blocco preventivo e lettura has_more / quota."""
-    # Se conosciamo il residuo reale lato AirLabs usiamo quello, altrimenti il limite locale
+    """Esegue una chiamata GET ad AirLabs con blocco preventivo e controllo quota reale."""
     rem = state.get("remote_remaining")
     if isinstance(rem, int) and rem <= MIN_RESERVE_CALLS:
         state["blocked"] = True
@@ -150,7 +200,7 @@ def airlabs_get(endpoint: str, params: dict, state: dict):
             f"Soglia di riserva AirLabs raggiunta ({rem} chiamate residue). "
             "Blocco attivo: riproverò automaticamente appena torna disponibile quota gratuita."
         )
-        return None, False, "QUOTA_EXCEEDED"
+        return None, "QUOTA_EXCEEDED"
 
     if rem is None and state["units_used"] + 1 > MAX_MONTHLY_CALLS:
         state["blocked"] = True
@@ -158,7 +208,7 @@ def airlabs_get(endpoint: str, params: dict, state: dict):
             f"Soglia locale raggiunta ({state['units_used']}/{MAX_MONTHLY_CALLS} chiamate). "
             "Blocco attivo: riproverò automaticamente alla prossima scansione."
         )
-        return None, False, "QUOTA_EXCEEDED"
+        return None, "QUOTA_EXCEEDED"
 
     query = {"api_key": AIRLABS_KEY, **params}
     url = f"{AIRLABS_BASE}/{endpoint}"
@@ -167,16 +217,16 @@ def airlabs_get(endpoint: str, params: dict, state: dict):
         resp = requests.get(url, params=query, timeout=30)
     except requests.RequestException as exc:
         print(f"[ERRORE RETE] {endpoint}: {exc}")
-        return None, False, "NETWORK_ERROR"
+        return None, "NETWORK_ERROR"
 
     if resp.status_code == 429:
         state["blocked"] = True
         state["blocked_reason"] = "AirLabs ha restituito HTTP 429 (quota esaurita). Retry alla prossima esecuzione."
-        return None, False, "QUOTA_EXCEEDED"
+        return None, "QUOTA_EXCEEDED"
 
     if resp.status_code != 200:
         print(f"[ERRORE HTTP {resp.status_code}] {endpoint}: {resp.text[:200]}")
-        return None, False, "HTTP_ERROR"
+        return None, "HTTP_ERROR"
 
     payload = resp.json()
 
@@ -187,32 +237,32 @@ def airlabs_get(endpoint: str, params: dict, state: dict):
         if any(k in err_code or k in err_msg.lower() for k in ("limit", "quota", "exceeded", "expired", "credit")):
             state["blocked"] = True
             state["blocked_reason"] = f"Quota AirLabs esaurita ({err_msg}). Retry alla prossima esecuzione."
-            return None, False, "QUOTA_EXCEEDED"
+            return None, "QUOTA_EXCEEDED"
         print(f"[ERRORE API AIRLABS] {err_code}: {err_msg}")
-        return None, False, "API_ERROR"
+        return None, "API_ERROR"
 
     state["units_used"] += 1
 
+    # In AirLabs v9: limits_by_month = tetto mensile (es. 1000/2000), limits_total = chiamate residue
     req_info = payload.get("request") or {}
-    has_more = bool(req_info.get("has_more", False))
-
     key_info = req_info.get("key") or {}
-    limits_left = key_info.get("limits_by_month")
-    limits_total = key_info.get("limits_total")
-    if isinstance(limits_left, int):
-        state["remote_remaining"] = limits_left
-        if isinstance(limits_total, int) and limits_total > 0:
-            state["units_limit"] = limits_total
-            state["units_used"] = max(0, limits_total - limits_left)
-        if limits_left <= MIN_RESERVE_CALLS:
-            state["blocked"] = True
-            state["blocked_reason"] = f"Chiamate residue AirLabs sotto la soglia di riserva ({limits_left} rimaste)."
+    monthly_limit = key_info.get("limits_by_month")
+    remaining_calls = key_info.get("limits_total")
 
-    return payload.get("response", []), has_more, "OK"
+    if isinstance(monthly_limit, int) and monthly_limit > 0:
+        state["units_limit"] = monthly_limit
+    if isinstance(remaining_calls, int):
+        state["remote_remaining"] = remaining_calls
+        if isinstance(monthly_limit, int) and monthly_limit >= remaining_calls:
+            state["units_used"] = monthly_limit - remaining_calls
+        if remaining_calls <= MIN_RESERVE_CALLS:
+            state["blocked"] = True
+            state["blocked_reason"] = f"Chiamate residue AirLabs sotto la soglia di riserva ({remaining_calls} rimaste)."
+
+    return payload.get("response", []), "OK"
 
 
 def parse_days(raw_days) -> list:
-    """Converte il campo days di AirLabs (lista o stringa) in numeri ISO 1..7."""
     if not raw_days:
         return [1, 2, 3, 4, 5, 6, 7]
     if isinstance(raw_days, str):
@@ -233,8 +283,7 @@ def resolve_airline_name(iata_code: str, state: dict) -> str:
     if code in state["airlines_cache"]:
         return state["airlines_cache"][code]
 
-    # Se la compagnia non e nella lista locale, proviamo 1 sola chiamata ad AirLabs (poi resta in cache)
-    data, _, status = airlabs_get("airlines", {"iata_code": code}, state)
+    data, status = airlabs_get("airlines", {"iata_code": code}, state)
     if status == "OK" and isinstance(data, list) and data:
         name = data[0].get("name") or code
         state["airlines_cache"][code] = name
@@ -245,44 +294,53 @@ def resolve_airline_name(iata_code: str, state: dict) -> str:
 
 
 def enrich_missing_airports(needed_codes: set, airports_db: dict, state: dict):
-    """Risolve coordinate e citta degli aeroporti esteri GRATIS da OurAirports CSV (0 chiamate AirLabs)."""
-    missing = sorted(c for c in needed_codes if c and c not in airports_db)
-    if not missing:
+    """Risolve coordinate e nomi citta degli aeroporti esteri GRATIS da OurAirports CSV (0 token AirLabs)."""
+    to_resolve = sorted(
+        c for c in needed_codes
+        if c and c not in BASE_AIRPORTS and (
+            c not in airports_db
+            or airports_db[c].get("lat") is None
+            or airports_db[c].get("city") == airports_db[c].get("name")
+        )
+    )
+    if not to_resolve:
         return
 
-    print(f"[AIRPORTS] Cerco coordinate per {len(missing)} nuovi aeroporti tramite OurAirports (0 token AirLabs)...")
+    print(f"[AIRPORTS] Aggiorno coordinate/città per {len(to_resolve)} aeroporti tramite OurAirports (0 token AirLabs)...")
     try:
         resp = requests.get(OURAIRPORTS_CSV_URL, timeout=45)
         if resp.status_code == 200:
-            needed_set = set(missing)
+            target_set = set(to_resolve)
             reader = csv.DictReader(io.StringIO(resp.text))
             resolved = 0
             for row in reader:
                 code = (row.get("iata_code") or "").strip().upper()
-                if code in needed_set and code not in airports_db:
+                if code in target_set:
                     lat_s = (row.get("latitude_deg") or "").strip()
                     lon_s = (row.get("longitude_deg") or "").strip()
                     if lat_s and lon_s:
+                        ap_name = (row.get("name") or code).strip()
+                        ap_city = (row.get("municipality") or ap_name).strip()
                         airports_db[code] = {
                             "iata": code,
-                            "name": (row.get("name") or code).strip(),
-                            "city": (row.get("municipality") or row.get("name") or code).strip(),
+                            "name": ap_name,
+                            "city": ap_city,
                             "country": (row.get("iso_country") or "").strip().upper(),
                             "lat": float(lat_s),
                             "lon": float(lon_s),
-                            "is_base": code in BASE_AIRPORTS,
+                            "is_base": False,
                         }
                         resolved += 1
-            print(f"[AIRPORTS] Risolti {resolved}/{len(missing)} aeroporti gratuitamente via OurAirports.")
+            print(f"[AIRPORTS] Risolti {resolved}/{len(to_resolve)} aeroporti gratuitamente via OurAirports.")
         else:
-            print(f"[AIRPORTS] Download OurAirports fallito (HTTP {resp.status_code}), passo al fallback AirLabs.")
+            print(f"[AIRPORTS] Download OurAirports fallito (HTTP {resp.status_code}).")
     except requests.RequestException as exc:
-        print(f"[AIRPORTS] Errore rete OurAirports ({exc}), passo al fallback AirLabs.")
+        print(f"[AIRPORTS] Errore rete OurAirports ({exc}).")
 
-    # Fallback AirLabs SOLO per eventuali rarissimi codici non trovati su OurAirports
-    still_missing = sorted(c for c in needed_codes if c and c not in airports_db)
+    # Fallback AirLabs SOLO per codici ancora privi di coordinate
+    still_missing = sorted(c for c in needed_codes if c and (c not in airports_db or airports_db[c].get("lat") is None))
     for code in still_missing:
-        data, _, status = airlabs_get("airports", {"iata_code": code}, state)
+        data, status = airlabs_get("airports", {"iata_code": code}, state)
         if status == "QUOTA_EXCEEDED":
             print(f"[BLOCCO QUOTA] Interrotto fallback aeroporti su {code}.")
             break
@@ -298,78 +356,92 @@ def enrich_missing_airports(needed_codes: set, airports_db: dict, state: dict):
                     "country": ap.get("country_code") or "",
                     "lat": float(lat),
                     "lon": float(lon),
-                    "is_base": code in BASE_AIRPORTS,
+                    "is_base": False,
                 }
-        time.sleep(0.25)
+        time.sleep(0.2)
+
+
+def ingest_rows(rows: list, temp_routes: dict, fallback_cs_routes: dict, discovered_airports: set, state: dict):
+    for row in rows:
+        orig = (row.get("dep_iata") or "").upper()
+        dest = (row.get("arr_iata") or "").upper()
+        if not orig or not dest or orig == dest:
+            continue
+
+        discovered_airports.add(orig)
+        discovered_airports.add(dest)
+
+        is_codeshare = bool(row.get("cs_airline_iata"))
+        al_iata = (row.get("cs_airline_iata") if is_codeshare else row.get("airline_iata") or "").upper()
+        al_name = resolve_airline_name(al_iata, state)
+        days = parse_days(row.get("days"))
+        dep_time = (row.get("dep_time") or "")[:5]
+
+        target_map = fallback_cs_routes if is_codeshare else temp_routes
+        entry = target_map.setdefault((orig, dest), {}).setdefault(
+            al_iata or al_name,
+            {"name": al_name, "iata": al_iata, "days": set(), "sample_times": set()},
+        )
+        entry["days"].update(days)
+        if dep_time and len(entry["sample_times"]) < 4:
+            entry["sample_times"].add(dep_time)
 
 
 def scan_airport_routes(iata: str, state: dict, routes_index: dict, discovered_airports: set):
-    """Scarica TUTTE le pagine di rotte in partenza e in arrivo per un singolo aeroporto base."""
+    """Scarica le rotte per compagnia per aggirare il limite di 50 righe/chiamata del piano free AirLabs."""
     temp_routes = {}
-    fallback_cs_routes = {}  # Tenuto come riserva se una tratta ha solo righe codeshare
-    total_raw_rows = 0
-    total_pages = 0
+    fallback_cs_routes = {}
+    calls_made = 0
+    raw_rows_total = 0
 
-    for label, direction_param in (("partenze", {"dep_iata": iata}), ("arrivi", {"arr_iata": iata})):
-        offset = 0
-        page = 0
-        while page < MAX_PAGES_PER_DIRECTION:
-            params = {
-                **direction_param,
-                "limit": 50,  # Massimo garantito su AirLabs Free (50 righe per pagina)
-                "offset": offset,
-                "_fields": "airline_iata,cs_airline_iata,dep_iata,arr_iata,dep_time,days",
-            }
-            rows, has_more, status = airlabs_get("routes", params, state)
+    # 1) Passata generale veloce (2 chiamate) per scoprire eventuali compagnie extra non in lista
+    discovered_carriers = list(AIRPORT_AIRLINES.get(iata, []))
+    seen_carriers = set(discovered_carriers)
+
+    for direction_param in ({"dep_iata": iata}, {"arr_iata": iata}):
+        rows, status = airlabs_get(
+            "routes",
+            {**direction_param, "_fields": "airline_iata,cs_airline_iata,dep_iata,arr_iata,dep_time,days"},
+            state,
+        )
+        if status == "QUOTA_EXCEEDED":
+            return "QUOTA_EXCEEDED"
+        if status == "OK" and isinstance(rows, list):
+            calls_made += 1
+            raw_rows_total += len(rows)
+            ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state)
+            for r in rows:
+                for k in ("airline_iata", "cs_airline_iata"):
+                    c = (r.get(k) or "").upper()
+                    if c and c not in seen_carriers:
+                        seen_carriers.add(c)
+                        discovered_carriers.append(c)
+        time.sleep(0.2)
+
+    # 2) Interrogazione mirata per compagnia (partenze + arrivi) per ottenere tutte le destinazioni
+    for carrier in discovered_carriers:
+        for direction_param in ({"dep_iata": iata, "airline_iata": carrier}, {"arr_iata": iata, "airline_iata": carrier}):
+            rows, status = airlabs_get(
+                "routes",
+                {**direction_param, "_fields": "airline_iata,cs_airline_iata,dep_iata,arr_iata,dep_time,days"},
+                state,
+            )
             if status == "QUOTA_EXCEEDED":
                 return "QUOTA_EXCEEDED"
-            if status != "OK" or not isinstance(rows, list) or not rows:
-                break
+            if status == "OK" and isinstance(rows, list) and rows:
+                calls_made += 1
+                raw_rows_total += len(rows)
+                ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state)
+            time.sleep(0.18)
 
-            page += 1
-            total_pages += 1
-            total_raw_rows += len(rows)
-
-            for row in rows:
-                orig = (row.get("dep_iata") or "").upper()
-                dest = (row.get("arr_iata") or "").upper()
-                if not orig or not dest or orig == dest:
-                    continue
-
-                discovered_airports.add(orig)
-                discovered_airports.add(dest)
-
-                is_codeshare = bool(row.get("cs_airline_iata"))
-                al_iata = (row.get("cs_airline_iata") if is_codeshare else row.get("airline_iata") or "").upper()
-                al_name = resolve_airline_name(al_iata, state)
-                days = parse_days(row.get("days"))
-                dep_time = (row.get("dep_time") or "")[:5]
-
-                target_map = fallback_cs_routes if is_codeshare else temp_routes
-                entry = target_map.setdefault((orig, dest), {}).setdefault(
-                    al_iata or al_name,
-                    {"name": al_name, "iata": al_iata, "days": set(), "sample_times": set()},
-                )
-                entry["days"].update(days)
-                if dep_time and len(entry["sample_times"]) < 4:
-                    entry["sample_times"].add(dep_time)
-
-            # Avanza dell'esatto numero di righe ricevute e continua finche has_more e True
-            offset += len(rows)
-            if not has_more:
-                break
-            time.sleep(0.25)
-
-        print(f"  -> {iata} ({label}): {page} pagine scaricate (offset finale {offset}).")
-
-    # Integra eventuali rotte/compagnie viste solo come codeshare se non gia presenti
+    # Integra eventuali rotte viste solo come codeshare se non gia presenti
     for pair, airlines_dict in fallback_cs_routes.items():
         dest_airlines = temp_routes.setdefault(pair, {})
         for al_key, al_val in airlines_dict.items():
             if al_key not in dest_airlines:
                 dest_airlines[al_key] = al_val
 
-    # Aggiorna solo le rotte che coinvolgono questo aeroporto (preservando gli altri 7!)
+    # Aggiorna solo le rotte di questo aeroporto, preservando intatti gli altri 7
     for k in [k for k in routes_index if k[0] == iata or k[1] == iata]:
         del routes_index[k]
 
@@ -388,7 +460,9 @@ def scan_airport_routes(iata: str, state: dict, routes_index: dict, discovered_a
             ],
         }
 
-    print(f"[INFO] {iata}: {total_pages} chiamate, {total_raw_rows} voli grezzi -> {len(temp_routes)} tratte dirette uniche.")
+    out_count = sum(1 for (o, _) in temp_routes if o == iata)
+    in_count = sum(1 for (_, d) in temp_routes if d == iata)
+    print(f"[INFO] {iata}: {calls_made} chiamate, {raw_rows_total} voli -> {out_count} destinazioni in partenza, {in_count} in arrivo.")
     return "OK"
 
 
@@ -416,7 +490,7 @@ def main():
     target = (args.airport or "AUTO").strip().upper()
     force = bool(args.force)
 
-    now = datetime.now()
+    now = datetime.now(ITALY_TZ)
     state = load_state(now)
 
     existing = load_json(ROUTES_FILE, {"airports": {}, "routes": []})
@@ -424,7 +498,6 @@ def main():
     routes_index = {(r["from"], r["to"]): r for r in existing.get("routes", [])}
     discovered_airports = set(airports_db.keys())
 
-    # Selezione aeroporti da scansionare
     if target == "ALL":
         to_scan = list(AIRPORT_SCHEDULE.keys())
         print(f"[MODO ALL] Forzo scansione completa su: {', '.join(to_scan)}")
@@ -439,6 +512,8 @@ def main():
                 to_scan.append(code)
             else:
                 last_dt = datetime.fromisoformat(last_str)
+                if last_dt.tzinfo is None:
+                    last_dt = last_dt.replace(tzinfo=ITALY_TZ)
                 if (now - last_dt).days >= interval_days:
                     to_scan.append(code)
     else:
@@ -460,10 +535,10 @@ def main():
                 state["blocked"] = False
                 state["blocked_reason"] = None
             rem_str = f" (rimaste su AirLabs: {state['remote_remaining']})" if state.get("remote_remaining") is not None else ""
-            print(f"[OK] {code} completato. Chiamate usate nel ciclo: {state['units_used']}/{state.get('units_limit', MAX_MONTHLY_CALLS)}{rem_str}")
+            print(f"[OK] {code} completato. Chiamate usate: {state['units_used']}/{state.get('units_limit', MAX_MONTHLY_CALLS)}{rem_str}")
             time.sleep(0.3)
 
-    # Arricchisce coordinate gratuitamente da OurAirports (anche se la quota AirLabs si fosse fermata!)
+    # Arricchisce coordinate e nomi citta gratuitamente da OurAirports
     enrich_missing_airports(discovered_airports, airports_db, state)
 
     valid_routes = [
