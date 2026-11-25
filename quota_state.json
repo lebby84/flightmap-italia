@@ -1,10 +1,10 @@
 {
   "cycle": "2026-11",
-  "units_used": 129,
+  "units_used": 265,
   "blocked": false,
   "blocked_reason": null,
   "last_scan": {
-    "BLQ": "2026-11-25T11:34:51+01:00",
+    "BLQ": "2026-11-25T18:30:08+01:00",
     "VRN": "2026-11-25T08:56:39",
     "BGY": "2026-11-25T08:56:39",
     "FLR": "2026-11-25T08:56:39",
@@ -15,13 +15,12 @@
   },
   "airlines_cache": {
     "FR": "Ryanair",
-    "MW": "MW",
-    "RK": "Ryanair UK",
-    "LW": "Lauda Europe",
-    "RR": "BUZZ",
+    "RK": "Ryanair",
+    "LW": "Ryanair",
+    "RR": "Ryanair",
     "U2": "easyJet",
-    "EC": "easyJet Europe",
-    "DS": "easyJet Switzerland",
+    "EC": "easyJet",
+    "DS": "easyJet",
     "W6": "Wizz Air",
     "W4": "Wizz Air Malta",
     "W9": "Wizz Air UK",
@@ -132,8 +131,9 @@
     "B2": "Belavia",
     "NI": "TAP Express",
     "E6": "Bringer Air Cargo Taxi Aereo",
-    "A5": "HOP!"
+    "A5": "HOP!",
+    "MW": "Ryanair"
   },
   "units_limit": 1000,
-  "remote_remaining": 871
+  "remote_remaining": 735
 }
