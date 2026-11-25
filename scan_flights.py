@@ -9,16 +9,18 @@ from zoneinfo import ZoneInfo
 import requests
 
 # ================= CONFIGURAZIONE =================
+SCANNER_VERSION = "v4-autopagination"
 AIRLABS_KEY = os.getenv("AIRLABS_KEY", "INCOLLA_QUI_LA_TUA_API_KEY")
 AIRLABS_BASE = "https://airlabs.co/api/v9"
 ITALY_TZ = ZoneInfo("Europe/Rome")
 
-# Database gratuito pubblico con coordinate/citta di tutti gli aeroporti mondiali (0 chiamate AirLabs!)
+# Database gratuito pubblico con coordinate/citta di tutti gli aeroporti mondiali (0 token AirLabs!)
 OURAIRPORTS_CSV_URL = "https://davidmegginson.github.io/ourairports-data/airports.csv"
 
-# Limite mensile prudenziale di sicurezza (viene aggiornato automaticamente con i dati reali di AirLabs)
+# Limite mensile prudenziale di sicurezza (si aggiorna automaticamente col residuo reale di AirLabs)
 MAX_MONTHLY_CALLS = 950
 MIN_RESERVE_CALLS = 15  # Blocca le chiamate se AirLabs segnala <= 15 richieste residue nel mese
+MAX_PAGES_PER_DIRECTION = 40  # Fino a 2.000 voli per direzione se la paginazione offset e attiva
 
 # Giorno del mese in cui si azzera il contatore mensile AirLabs (1-28)
 BILLING_RESET_DAY = 1
@@ -35,10 +37,10 @@ AIRPORT_SCHEDULE = {
     "VCE": 30,  # Venezia: ogni 30 giorni
 }
 
-# Compagnie principali per ciascun aeroporto base
+# Compagnie principali per ciascun aeroporto (usate SOLO come fallback se AirLabs blocca offset)
 AIRPORT_AIRLINES = {
     "BLQ": [
-        "FR", "MW", "RK", "LW", "RR",  # Gruppo Ryanair (DAC, Malta Air, UK, Lauda, Buzz)
+        "FR", "MW", "RK", "LW", "RR",  # Gruppo Ryanair
         "W4", "W6", "EC", "U2",        # Wizz Air & easyJet
         "AZ", "EN", "LH", "AF", "KL", "WA", "BA", "IB", "YW", "I2",
         "VY", "V7", "OS", "LX", "SN", "TP", "NI", "SK", "DY", "AY", "EI",
@@ -88,25 +90,26 @@ AIRPORT_AIRLINES = {
     ],
 }
 
-# Destinazioni europee/mediterranee usate come rete di recupero SOLO se una compagnia supera il tetto di 50 righe
-CANDIDATE_DESTINATIONS = [
+# Rete di recupero destinazioni (usata SOLO se AirLabs blocca la paginazione offset e una compagnia tocca 50 righe)
+CANDIDATE_DESTINATIONS = sorted(set([
     # Italia
-    "BRI", "BDS", "CAG", "CTA", "PMO", "SUF", "TPS", "AHO", "OLB", "LMP", "PNL", "REG", "PSR", "TRS", "NAP",
+    "BRI", "BDS", "CAG", "CTA", "PMO", "SUF", "TPS", "AHO", "OLB", "LMP", "PNL", "REG", "PSR", "TRS", "NAP", "FCO", "CIA",
     # UK & Irlanda
-    "STN", "LTN", "LGW", "MAN", "EDI", "BHX", "BRS", "LBA", "NCL", "EMA", "DUB", "ORK", "SNN",
+    "STN", "LTN", "LGW", "LHR", "MAN", "EDI", "BHX", "BRS", "LBA", "NCL", "EMA", "LPL", "GLA", "BFS", "DUB", "ORK", "SNN",
     # Spagna & Portogallo
-    "MAD", "BCN", "VLC", "SVQ", "AGP", "ALC", "PMI", "IBZ", "MAH", "TFS", "FUE", "ACE", "LPA", "SCQ", "SDR", "ZAZ", "LIS", "OPO", "FAO",
+    "MAD", "BCN", "VLC", "SVQ", "AGP", "ALC", "PMI", "IBZ", "MAH", "TFS", "FUE", "ACE", "LPA", "SCQ", "SDR", "ZAZ", "GRX", "GRO", "REU", "LIS", "OPO", "FAO", "FNC",
     # Francia & Benelux
-    "BVA", "CDG", "ORY", "MRS", "TLS", "BOD", "NTE", "LYS", "NCE", "CRL", "BRU", "EIN", "AMS",
+    "BVA", "CDG", "ORY", "MRS", "TLS", "BOD", "NTE", "LYS", "NCE", "CRL", "BRU", "EIN", "AMS", "LUX",
     # Germania, Austria, Svizzera, Nordics
     "CGN", "NRN", "BER", "FMM", "NUE", "HHN", "HAM", "DUS", "FRA", "MUC", "VIE", "ZRH", "GVA", "BSL", "CPH", "BLL", "ARN", "NYO", "GOT", "OSL", "HEL",
     # Polonia & Baltici
     "WAW", "WMI", "KRK", "KTW", "GDN", "WRO", "POZ", "KUN", "VNO", "RIX", "TLL",
     # Centro-Est Europa & Balcani
-    "PRG", "BTS", "BUD", "OTP", "CLJ", "IAS", "TSR", "SCV", "CRA", "SOF", "TIA", "ZAD", "SPU", "DBV", "PUY", "ZAG", "BEG", "SKP",
-    # Grecia, Cipro, Malta, Medio Oriente, Nord Africa
-    "ATH", "SKG", "CFU", "RHO", "HER", "CHQ", "JTR", "KGS", "ZTH", "EFL", "PVK", "KLX", "PFO", "LCA", "MLA", "AMM", "TLV", "RAK", "FEZ", "TNG", "AGA", "CMN", "TUN"
-]
+    "PRG", "BTS", "BUD", "OTP", "BBU", "CLJ", "IAS", "TSR", "SCV", "CRA", "SBZ", "SOF", "VAR", "TIA", "ZAD", "SPU", "DBV", "PUY", "ZAG", "BEG", "SKP",
+    # Grecia, Cipro, Malta, Turchia, Medio Oriente, Nord Africa
+    "ATH", "SKG", "CFU", "RHO", "HER", "CHQ", "JTR", "JMK", "KGS", "ZTH", "EFL", "PVK", "KLX", "PFO", "LCA", "MLA",
+    "IST", "SAW", "ADB", "AYT", "AMM", "TLV", "DXB", "AUH", "DOH", "RAK", "FEZ", "TNG", "AGA", "CMN", "TUN", "CAI", "SSH", "RMF", "HRG"
+]))
 
 BASE_AIRPORTS = {
     "BLQ": {"iata": "BLQ", "name": "Bologna Guglielmo Marconi", "city": "Bologna", "country": "IT", "lat": 44.5354, "lon": 11.2887, "is_base": True},
@@ -119,7 +122,94 @@ BASE_AIRPORTS = {
     "VCE": {"iata": "VCE", "name": "Venezia Marco Polo", "city": "Venezia", "country": "IT", "lat": 45.5053, "lon": 12.3519, "is_base": True},
 }
 
-# Unifica le 5 controllate del gruppo Ryanair sotto "Ryanair" nel filtro (mantenendo il codice IATA specifico nel badge)
+# Nomi citta chiari in italiano per gli aeroporti secondari e principali (cosi cercando "Parigi" trovi sia CDG che BVA!)
+CITY_OVERRIDES = {
+    "CDG": "Parigi (Charles de Gaulle)",
+    "ORY": "Parigi (Orly)",
+    "BVA": "Parigi (Beauvais)",
+    "LHR": "Londra (Heathrow)",
+    "STN": "Londra (Stansted)",
+    "LTN": "Londra (Luton)",
+    "LGW": "Londra (Gatwick)",
+    "BRU": "Bruxelles (Zaventem)",
+    "CRL": "Bruxelles (Charleroi)",
+    "ARN": "Stoccolma (Arlanda)",
+    "NYO": "Stoccolma (Skavsta)",
+    "WAW": "Varsavia (Chopin)",
+    "WMI": "Varsavia (Modlin)",
+    "FRA": "Francoforte",
+    "HHN": "Francoforte (Hahn)",
+    "MUC": "Monaco di Baviera",
+    "FMM": "Monaco (Memmingen)",
+    "NRN": "Düsseldorf (Weeze)",
+    "DUB": "Dublino",
+    "EDI": "Edimburgo",
+    "KRK": "Cracovia",
+    "PRG": "Praga",
+    "VIE": "Vienna",
+    "LIS": "Lisbona",
+    "ATH": "Atene",
+    "BCN": "Barcellona",
+    "BER": "Berlino",
+    "ZRH": "Zurigo",
+    "CPH": "Copenaghen",
+    "OTP": "Bucarest (Otopeni)",
+    "BBU": "Bucarest (Băneasa)",
+    "MLA": "Malta",
+    "FCO": "Roma (Fiumicino)",
+    "CIA": "Roma (Ciampino)",
+    "NAP": "Napoli",
+    "PMO": "Palermo",
+    "CTA": "Catania",
+    "CAG": "Cagliari",
+    "BRI": "Bari",
+    "BDS": "Brindisi",
+    "AHO": "Alghero",
+    "OLB": "Olbia",
+    "SUF": "Lamezia Terme",
+    "TPS": "Trapani",
+    "IST": "Istanbul",
+    "SAW": "Istanbul (Sabiha Gökçen)",
+    "PMI": "Palma di Maiorca",
+    "SVQ": "Siviglia",
+    "VLC": "Valencia",
+    "AGP": "Malaga",
+    "ALC": "Alicante",
+    "ACE": "Lanzarote",
+    "TFS": "Tenerife Sud",
+    "FUE": "Fuerteventura",
+    "LPA": "Gran Canaria",
+    "CGN": "Colonia",
+    "DUS": "Düsseldorf",
+    "MRS": "Marsiglia",
+    "TLS": "Tolosa",
+    "LYS": "Lione",
+    "NCE": "Nizza",
+    "BOD": "Bordeaux",
+    "BEG": "Belgrado",
+    "TIA": "Tirana",
+    "WRO": "Breslavia",
+    "GDN": "Danzica",
+    "POZ": "Poznań",
+    "KTW": "Katowice",
+    "ZAD": "Zara",
+    "SPU": "Spalato",
+    "DBV": "Dubrovnik",
+    "ZAG": "Zagabria",
+    "SKG": "Salonicco",
+    "RHO": "Rodi",
+    "CFU": "Corfù",
+    "HER": "Heraklion (Creta)",
+    "CHQ": "Chania (Creta)",
+    "JTR": "Santorini",
+    "RAK": "Marrakech",
+    "FEZ": "Fès",
+    "TNG": "Tangeri",
+    "CMN": "Casablanca",
+    "TUN": "Tunisi",
+}
+
+# Unifica le controllate del gruppo Ryanair/easyJet sotto il marchio principale
 DEFAULT_AIRLINES = {
     "FR": "Ryanair", "MW": "Ryanair", "RK": "Ryanair", "LW": "Ryanair", "RR": "Ryanair",
     "U2": "easyJet", "EC": "easyJet", "DS": "easyJet",
@@ -208,7 +298,6 @@ def load_state(now: datetime) -> dict:
     state.setdefault("units_limit", MAX_MONTHLY_CALLS)
     state.setdefault("remote_remaining", None)
 
-    # Mantiene la cache dinamica ma applica sempre le mappature ufficiali di DEFAULT_AIRLINES (es. MW/RR/RK/LW -> Ryanair)
     cached = {k: v for k, v in state.get("airlines_cache", {}).items() if v and v != k}
     state["airlines_cache"] = {**cached, **DEFAULT_AIRLINES}
     return state
@@ -317,6 +406,12 @@ def resolve_airline_name(iata_code: str, state: dict) -> str:
     return code
 
 
+def apply_city_overrides(airports_db: dict):
+    for code, nice_city in CITY_OVERRIDES.items():
+        if code in airports_db and not airports_db[code].get("is_base"):
+            airports_db[code]["city"] = nice_city
+
+
 def enrich_missing_airports(needed_codes: set, airports_db: dict, state: dict):
     """Risolve coordinate e nomi citta degli aeroporti esteri GRATIS da OurAirports CSV (0 token AirLabs)."""
     to_resolve = sorted(
@@ -327,39 +422,37 @@ def enrich_missing_airports(needed_codes: set, airports_db: dict, state: dict):
             or airports_db[c].get("city") == airports_db[c].get("name")
         )
     )
-    if not to_resolve:
-        return
-
-    print(f"[AIRPORTS] Aggiorno coordinate/città per {len(to_resolve)} aeroporti tramite OurAirports (0 token AirLabs)...")
-    try:
-        resp = requests.get(OURAIRPORTS_CSV_URL, timeout=45)
-        if resp.status_code == 200:
-            target_set = set(to_resolve)
-            reader = csv.DictReader(io.StringIO(resp.text))
-            resolved = 0
-            for row in reader:
-                code = (row.get("iata_code") or "").strip().upper()
-                if code in target_set:
-                    lat_s = (row.get("latitude_deg") or "").strip()
-                    lon_s = (row.get("longitude_deg") or "").strip()
-                    if lat_s and lon_s:
-                        ap_name = (row.get("name") or code).strip()
-                        ap_city = (row.get("municipality") or ap_name).strip()
-                        airports_db[code] = {
-                            "iata": code,
-                            "name": ap_name,
-                            "city": ap_city,
-                            "country": (row.get("iso_country") or "").strip().upper(),
-                            "lat": float(lat_s),
-                            "lon": float(lon_s),
-                            "is_base": False,
-                        }
-                        resolved += 1
-            print(f"[AIRPORTS] Risolti {resolved}/{len(to_resolve)} aeroporti gratuitamente via OurAirports.")
-        else:
-            print(f"[AIRPORTS] Download OurAirports fallito (HTTP {resp.status_code}).")
-    except requests.RequestException as exc:
-        print(f"[AIRPORTS] Errore rete OurAirports ({exc}).")
+    if to_resolve:
+        print(f"[AIRPORTS] Aggiorno coordinate/città per {len(to_resolve)} aeroporti tramite OurAirports (0 token AirLabs)...")
+        try:
+            resp = requests.get(OURAIRPORTS_CSV_URL, timeout=45)
+            if resp.status_code == 200:
+                target_set = set(to_resolve)
+                reader = csv.DictReader(io.StringIO(resp.text))
+                resolved = 0
+                for row in reader:
+                    code = (row.get("iata_code") or "").strip().upper()
+                    if code in target_set:
+                        lat_s = (row.get("latitude_deg") or "").strip()
+                        lon_s = (row.get("longitude_deg") or "").strip()
+                        if lat_s and lon_s:
+                            ap_name = (row.get("name") or code).strip()
+                            ap_city = CITY_OVERRIDES.get(code) or (row.get("municipality") or ap_name).strip()
+                            airports_db[code] = {
+                                "iata": code,
+                                "name": ap_name,
+                                "city": ap_city,
+                                "country": (row.get("iso_country") or "").strip().upper(),
+                                "lat": float(lat_s),
+                                "lon": float(lon_s),
+                                "is_base": False,
+                            }
+                            resolved += 1
+                print(f"[AIRPORTS] Risolti {resolved}/{len(to_resolve)} aeroporti gratuitamente via OurAirports.")
+            else:
+                print(f"[AIRPORTS] Download OurAirports fallito (HTTP {resp.status_code}).")
+        except requests.RequestException as exc:
+            print(f"[AIRPORTS] Errore rete OurAirports ({exc}).")
 
     still_missing = sorted(c for c in needed_codes if c and (c not in airports_db or airports_db[c].get("lat") is None))
     for code in still_missing:
@@ -375,13 +468,26 @@ def enrich_missing_airports(needed_codes: set, airports_db: dict, state: dict):
                 airports_db[code] = {
                     "iata": code,
                     "name": ap.get("name") or code,
-                    "city": ap.get("city") or ap.get("name") or code,
+                    "city": CITY_OVERRIDES.get(code) or ap.get("city") or ap.get("name") or code,
                     "country": ap.get("country_code") or "",
                     "lat": float(lat),
                     "lon": float(lon),
                     "is_base": False,
                 }
         time.sleep(0.2)
+
+    apply_city_overrides(airports_db)
+
+
+def row_signature(row: dict) -> tuple:
+    return (
+        (row.get("dep_iata") or "").upper(),
+        (row.get("arr_iata") or "").upper(),
+        (row.get("airline_iata") or "").upper(),
+        (row.get("cs_airline_iata") or "").upper(),
+        (row.get("dep_time") or "")[:5],
+        str(row.get("days") or ""),
+    )
 
 
 def ingest_rows(rows: list, temp_routes: dict, fallback_cs_routes: dict, discovered_airports: set, state: dict):
@@ -401,7 +507,6 @@ def ingest_rows(rows: list, temp_routes: dict, fallback_cs_routes: dict, discove
         dep_time = (row.get("dep_time") or "")[:5]
 
         target_map = fallback_cs_routes if is_codeshare else temp_routes
-        # Raggruppa per nome compagnia unificato (es. MW/FR/RR/LW/RK -> Ryanair)
         entry = target_map.setdefault((orig, dest), {}).setdefault(
             al_name,
             {"name": al_name, "iata": al_iata, "days": set(), "sample_times": set()},
@@ -411,112 +516,169 @@ def ingest_rows(rows: list, temp_routes: dict, fallback_cs_routes: dict, discove
             entry["sample_times"].add(dep_time)
 
 
+def try_paginated_direction(direction_param: dict, label: str, state: dict, temp_routes: dict, fallback_cs_routes: dict, discovered_airports: set):
+    """Prova a paginare con offset=0, 50, 100... Restituisce (ok_complete, calls, raw_rows, discovered_carriers, status)."""
+    seen_sigs = set()
+    discovered_carriers = []
+    calls = 0
+    raw_rows = 0
+
+    for page in range(MAX_PAGES_PER_DIRECTION):
+        offset = page * 50
+        params = {
+            **direction_param,
+            "limit": 50,
+            "offset": offset,
+            "_fields": "airline_iata,cs_airline_iata,dep_iata,arr_iata,dep_time,days",
+        }
+        rows, status = airlabs_get("routes", params, state)
+        if status == "QUOTA_EXCEEDED":
+            return False, calls, raw_rows, discovered_carriers, "QUOTA_EXCEEDED"
+        if status != "OK" or not isinstance(rows, list):
+            return False, calls, raw_rows, discovered_carriers, status
+
+        calls += 1
+        if not rows:
+            # Pagina vuota dopo almeno una pagina con <50 o fine reale
+            if page == 1 and len(seen_sigs) >= 50:
+                # AirLabs potrebbe aver bloccato offset=50 restituendo [] sul piano free
+                print(f"  [PAGINAZIONE] {label}: offset=50 vuoto -> paginazione non attiva su piano Free.")
+                return False, calls, raw_rows, discovered_carriers, "NO_PAGINATION"
+            return True, calls, raw_rows, discovered_carriers, "OK"
+
+        new_sigs = [row_signature(r) for r in rows if row_signature(r) not in seen_sigs]
+        if page > 0 and not new_sigs:
+            print(f"  [PAGINAZIONE] {label}: offset={offset} ha restituito righe duplicate -> paginazione ignorata da AirLabs.")
+            return False, calls, raw_rows, discovered_carriers, "NO_PAGINATION"
+
+        seen_sigs.update(new_sigs)
+        raw_rows += len(rows)
+        ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state)
+        for r in rows:
+            for k in ("airline_iata", "cs_airline_iata"):
+                c = (r.get(k) or "").upper()
+                if c and c not in discovered_carriers:
+                    discovered_carriers.append(c)
+
+        if len(rows) < 50:
+            print(f"  [PAGINAZIONE OK] {label}: scaricate tutte le {page + 1} pagine ({raw_rows} voli) in {calls} chiamate!")
+            return True, calls, raw_rows, discovered_carriers, "OK"
+
+        time.sleep(0.18)
+
+    print(f"  [PAGINAZIONE] {label}: raggiunto tetto di {MAX_PAGES_PER_DIRECTION} pagine ({raw_rows} voli).")
+    return True, calls, raw_rows, discovered_carriers, "OK"
+
+
 def scan_airport_routes(iata: str, state: dict, routes_index: dict, discovered_airports: set):
-    """Scarica tutte le rotte per compagnia e recupera eventuali rotte tagliate dal limite di 50 righe."""
+    """Strategia a 2 livelli: prima tenta paginazione diretta (pochissime chiamate), poi fallback compagnia+tratte."""
     temp_routes = {}
     fallback_cs_routes = {}
     calls_made = 0
     raw_rows_total = 0
-    hit_50_cap = False
 
-    # 1) Passata generale (2 chiamate) per scoprire eventuali compagnie extra
-    discovered_carriers = list(AIRPORT_AIRLINES.get(iata, []))
-    seen_carriers = set(discovered_carriers)
+    # LIVELLO 1: Prova paginazione diretta su partenze e arrivi (se funziona, fa 100% delle rotte in ~15 chiamate!)
+    dep_ok, c1, r1, carriers1, st1 = try_paginated_direction(
+        {"dep_iata": iata}, f"{iata} partenze", state, temp_routes, fallback_cs_routes, discovered_airports
+    )
+    calls_made += c1
+    raw_rows_total += r1
+    if st1 == "QUOTA_EXCEEDED":
+        return "QUOTA_EXCEEDED"
 
-    for direction_param in ({"dep_iata": iata}, {"arr_iata": iata}):
-        rows, status = airlabs_get(
-            "routes",
-            {**direction_param, "_fields": "airline_iata,cs_airline_iata,dep_iata,arr_iata,dep_time,days"},
-            state,
-        )
-        if status == "QUOTA_EXCEEDED":
-            return "QUOTA_EXCEEDED"
-        if status == "OK" and isinstance(rows, list):
-            calls_made += 1
-            raw_rows_total += len(rows)
-            if len(rows) >= 50:
-                hit_50_cap = True
-            ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state)
-            for r in rows:
-                for k in ("airline_iata", "cs_airline_iata"):
-                    c = (r.get(k) or "").upper()
-                    if c and c not in seen_carriers:
-                        seen_carriers.add(c)
-                        discovered_carriers.append(c)
-        time.sleep(0.18)
+    arr_ok, c2, r2, carriers2, st2 = try_paginated_direction(
+        {"arr_iata": iata}, f"{iata} arrivi", state, temp_routes, fallback_cs_routes, discovered_airports
+    )
+    calls_made += c2
+    raw_rows_total += r2
+    if st2 == "QUOTA_EXCEEDED":
+        return "QUOTA_EXCEEDED"
 
-    # 2) Interrogazione per singola compagnia: prima dep_iata, e arr_iata SOLO per le compagnie realmente attive
-    active_carriers = []
-    for carrier in discovered_carriers:
-        rows, status = airlabs_get(
-            "routes",
-            {"dep_iata": iata, "airline_iata": carrier, "_fields": "airline_iata,cs_airline_iata,dep_iata,arr_iata,dep_time,days"},
-            state,
-        )
-        if status == "QUOTA_EXCEEDED":
-            return "QUOTA_EXCEEDED"
-        if status == "OK" and isinstance(rows, list):
-            calls_made += 1
-            if rows:
-                active_carriers.append(carrier)
-                raw_rows_total += len(rows)
-                if len(rows) >= 50:
-                    hit_50_cap = True
-                    print(f"  [CAP 50] {iata} - {carrier} ha raggiunto 50 righe (attiverò recupero destinazioni mancanti).")
-                ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state)
-        time.sleep(0.15)
+    # LIVELLO 2 (solo se la paginazione offset non e supportata sul piano Free): per compagnia + recupero alfabetico
+    if not (dep_ok and arr_ok):
+        print(f"  [FALLBACK] Uso scansione per compagnia + recupero tratte tagliate su {iata}...")
+        discovered_carriers = list(AIRPORT_AIRLINES.get(iata, []))
+        seen_carriers = set(discovered_carriers)
+        for c in carriers1 + carriers2:
+            if c not in seen_carriers:
+                seen_carriers.add(c)
+                discovered_carriers.append(c)
 
-    for carrier in active_carriers:
-        rows, status = airlabs_get(
-            "routes",
-            {"arr_iata": iata, "airline_iata": carrier, "_fields": "airline_iata,cs_airline_iata,dep_iata,arr_iata,dep_time,days"},
-            state,
-        )
-        if status == "QUOTA_EXCEEDED":
-            return "QUOTA_EXCEEDED"
-        if status == "OK" and isinstance(rows, list) and rows:
-            calls_made += 1
-            raw_rows_total += len(rows)
-            if len(rows) >= 50:
-                hit_50_cap = True
-            ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state)
-        time.sleep(0.15)
+        active_carriers = []
+        capped_cutoffs = []
 
-    # 3) Rete di recupero: se una compagnia dominante (es. MW/FR/EC) ha toccato il limite di 50 righe,
-    # controlla le destinazioni candidate non ancora trovate (1 chiamata per tratta = 0 troncamenti!)
-    if hit_50_cap:
-        found_dests = {dest for (orig, dest) in temp_routes if orig == iata}
-        missing_candidates = [d for d in CANDIDATE_DESTINATIONS if d != iata and d not in found_dests]
-        print(f"  [RECUPERO] Controllo {len(missing_candidates)} destinazioni candidate per {iata}...")
-        recovered = 0
-        for dest in missing_candidates:
+        for carrier in discovered_carriers:
             rows, status = airlabs_get(
                 "routes",
-                {"dep_iata": iata, "arr_iata": dest, "_fields": "airline_iata,cs_airline_iata,dep_iata,arr_iata,dep_time,days"},
+                {"dep_iata": iata, "airline_iata": carrier, "_fields": "airline_iata,cs_airline_iata,dep_iata,arr_iata,dep_time,days"},
                 state,
             )
             if status == "QUOTA_EXCEEDED":
-                print(f"  [BLOCCO QUOTA] Recupero fermato dopo {recovered} nuove tratte su {iata}.")
-                break
+                return "QUOTA_EXCEEDED"
+            if status == "OK" and isinstance(rows, list):
+                calls_made += 1
+                if rows:
+                    active_carriers.append(carrier)
+                    raw_rows_total += len(rows)
+                    ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state)
+                    if len(rows) >= 50:
+                        dests = sorted({(r.get("arr_iata") or "").upper() for r in rows if r.get("arr_iata")})
+                        if dests:
+                            capped_cutoffs.append(dests[-1])
+                            print(f"  [CAP 50] {iata} - {carrier} tagliato alla destinazione '{dests[-1]}'.")
+            time.sleep(0.15)
+
+        for carrier in active_carriers:
+            rows, status = airlabs_get(
+                "routes",
+                {"arr_iata": iata, "airline_iata": carrier, "_fields": "airline_iata,cs_airline_iata,dep_iata,arr_iata,dep_time,days"},
+                state,
+            )
+            if status == "QUOTA_EXCEEDED":
+                return "QUOTA_EXCEEDED"
             if status == "OK" and isinstance(rows, list) and rows:
                 calls_made += 1
                 raw_rows_total += len(rows)
-                recovered += 1
                 ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state)
-                # Scarica anche il ritorno per questa tratta appena scoperta
-                ret_rows, ret_status = airlabs_get(
+            time.sleep(0.15)
+
+        # Recupero mirato: controlla TUTTE le destinazioni candidate >= minimo cutoff (NON salta STN, MAD, CTA, PMO!)
+        if capped_cutoffs:
+            min_cutoff = min(capped_cutoffs)
+            to_check = [d for d in CANDIDATE_DESTINATIONS if d != iata and d >= min_cutoff]
+            print(f"  [RECUPERO] Controllo {len(to_check)} destinazioni candidate >= '{min_cutoff}' per {iata}...")
+            recovered_new = 0
+            for dest in to_check:
+                was_present = (iata, dest) in temp_routes
+                rows, status = airlabs_get(
                     "routes",
-                    {"dep_iata": dest, "arr_iata": iata, "_fields": "airline_iata,cs_airline_iata,dep_iata,arr_iata,dep_time,days"},
+                    {"dep_iata": iata, "arr_iata": dest, "_fields": "airline_iata,cs_airline_iata,dep_iata,arr_iata,dep_time,days"},
                     state,
                 )
-                if ret_status == "QUOTA_EXCEEDED":
+                if status == "QUOTA_EXCEEDED":
+                    print(f"  [BLOCCO QUOTA] Recupero fermato dopo {recovered_new} nuove destinazioni su {iata}.")
                     break
-                if ret_status == "OK" and isinstance(ret_rows, list) and ret_rows:
+                if status == "OK" and isinstance(rows, list):
                     calls_made += 1
-                    raw_rows_total += len(ret_rows)
-                    ingest_rows(ret_rows, temp_routes, fallback_cs_routes, discovered_airports, state)
-            time.sleep(0.15)
-        print(f"  [RECUPERO] Aggiunte {recovered} destinazioni extra per {iata}.")
+                    if rows:
+                        raw_rows_total += len(rows)
+                        if not was_present:
+                            recovered_new += 1
+                        ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state)
+                        # Scarica anche il ritorno
+                        ret_rows, ret_status = airlabs_get(
+                            "routes",
+                            {"dep_iata": dest, "arr_iata": iata, "_fields": "airline_iata,cs_airline_iata,dep_iata,arr_iata,dep_time,days"},
+                            state,
+                        )
+                        if ret_status == "QUOTA_EXCEEDED":
+                            break
+                        if ret_status == "OK" and isinstance(ret_rows, list) and ret_rows:
+                            calls_made += 1
+                            raw_rows_total += len(ret_rows)
+                            ingest_rows(ret_rows, temp_routes, fallback_cs_routes, discovered_airports, state)
+                time.sleep(0.14)
+            print(f"  [RECUPERO] Scoperte {recovered_new} nuove destinazioni per {iata} (e integrate quelle parziali).")
 
     # Integra eventuali rotte viste solo come codeshare
     for pair, airlines_dict in fallback_cs_routes.items():
@@ -525,7 +687,7 @@ def scan_airport_routes(iata: str, state: dict, routes_index: dict, discovered_a
             if al_key not in dest_airlines:
                 dest_airlines[al_key] = al_val
 
-    # Aggiorna solo le rotte di questo aeroporto, preservando intatti gli altri 7
+    # Aggiorna solo le rotte di questo aeroporto, preservando gli altri 7
     for k in [k for k in routes_index if k[0] == iata or k[1] == iata]:
         del routes_index[k]
 
@@ -544,9 +706,10 @@ def scan_airport_routes(iata: str, state: dict, routes_index: dict, discovered_a
             ],
         }
 
-    out_count = sum(1 for (o, _) in temp_routes if o == iata)
-    in_count = sum(1 for (_, d) in temp_routes if d == iata)
-    print(f"[INFO] {iata}: {calls_made} chiamate totali, {raw_rows_total} voli -> {out_count} destinazioni in partenza, {in_count} in arrivo.")
+    out_dests = sorted({d for (o, d) in temp_routes if o == iata})
+    in_origs = sorted({o for (o, d) in temp_routes if d == iata})
+    print(f"[INFO] {iata}: {calls_made} chiamate totali, {raw_rows_total} voli -> {len(out_dests)} destinazioni in partenza, {len(in_origs)} in arrivo.")
+    print(f"[CHECK] {iata} contiene DUB={'DUB' in out_dests}, BVA={'BVA' in out_dests}, STN={'STN' in out_dests}, MAD={'MAD' in out_dests}")
     return "OK"
 
 
@@ -567,6 +730,7 @@ def parse_args():
 
 
 def main():
+    print(f"=== FlightMap Scanner {SCANNER_VERSION} ===")
     if not AIRLABS_KEY or AIRLABS_KEY == "INCOLLA_QUI_LA_TUA_API_KEY":
         raise SystemExit("Configura prima il secret AIRLABS_KEY su GitHub (o la variabile d'ambiente locale).")
 
@@ -622,7 +786,6 @@ def main():
             print(f"[OK] {code} completato. Chiamate usate: {state['units_used']}/{state.get('units_limit', MAX_MONTHLY_CALLS)}{rem_str}")
             time.sleep(0.3)
 
-    # Arricchisce coordinate e nomi citta gratuitamente da OurAirports
     enrich_missing_airports(discovered_airports, airports_db, state)
 
     valid_routes = [
