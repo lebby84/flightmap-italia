@@ -1,0 +1,2614 @@
+{
+  "generated_at": "2026-11-25T08:56:39",
+  "quota_status": {
+    "cycle": "2026-11",
+    "units_used": 28,
+    "units_limit": 900,
+    "blocked": false,
+    "reason": null,
+    "last_scan_by_airport": {
+      "BLQ": "2026-11-25T08:56:39",
+      "VRN": "2026-11-25T08:56:39",
+      "BGY": "2026-11-25T08:56:39",
+      "FLR": "2026-11-25T08:56:39",
+      "TSF": "2026-11-25T08:56:39",
+      "LIN": "2026-11-25T08:56:39",
+      "MXP": "2026-11-25T08:56:39",
+      "VCE": "2026-11-25T08:56:39"
+    }
+  },
+  "airports": {
+    "BLQ": {
+      "iata": "BLQ",
+      "name": "Bologna Guglielmo Marconi",
+      "city": "Bologna",
+      "country": "IT",
+      "lat": 44.5354,
+      "lon": 11.2887,
+      "is_base": true
+    },
+    "VRN": {
+      "iata": "VRN",
+      "name": "Verona Villafranca",
+      "city": "Verona",
+      "country": "IT",
+      "lat": 45.3957,
+      "lon": 10.8885,
+      "is_base": true
+    },
+    "BGY": {
+      "iata": "BGY",
+      "name": "Milano Bergamo",
+      "city": "Bergamo",
+      "country": "IT",
+      "lat": 45.6739,
+      "lon": 9.7042,
+      "is_base": true
+    },
+    "FLR": {
+      "iata": "FLR",
+      "name": "Firenze Peretola",
+      "city": "Firenze",
+      "country": "IT",
+      "lat": 43.81,
+      "lon": 11.2051,
+      "is_base": true
+    },
+    "TSF": {
+      "iata": "TSF",
+      "name": "Treviso Canova",
+      "city": "Treviso",
+      "country": "IT",
+      "lat": 45.6484,
+      "lon": 12.1944,
+      "is_base": true
+    },
+    "LIN": {
+      "iata": "LIN",
+      "name": "Milano Linate",
+      "city": "Milano",
+      "country": "IT",
+      "lat": 45.4451,
+      "lon": 9.2767,
+      "is_base": true
+    },
+    "MXP": {
+      "iata": "MXP",
+      "name": "Milano Malpensa",
+      "city": "Milano",
+      "country": "IT",
+      "lat": 45.6306,
+      "lon": 8.7281,
+      "is_base": true
+    },
+    "VCE": {
+      "iata": "VCE",
+      "name": "Venezia Marco Polo",
+      "city": "Venezia",
+      "country": "IT",
+      "lat": 45.5053,
+      "lon": 12.3519,
+      "is_base": true
+    },
+    "ADD": {
+      "iata": "ADD",
+      "name": "Addis Ababa Bole International Airport",
+      "city": "Addis Ababa Bole International Airport",
+      "country": "ET",
+      "lat": 8.97792,
+      "lon": 38.79805,
+      "is_base": false
+    },
+    "AGA": {
+      "iata": "AGA",
+      "name": "Agadir-Al Massira Airport",
+      "city": "Agadir-Al Massira Airport",
+      "country": "MA",
+      "lat": 30.325,
+      "lon": -9.41307,
+      "is_base": false
+    },
+    "AHO": {
+      "iata": "AHO",
+      "name": "Alghero-Fertilia Airport",
+      "city": "Alghero-Fertilia Airport",
+      "country": "IT",
+      "lat": 40.63213,
+      "lon": 8.29077,
+      "is_base": false
+    },
+    "ALC": {
+      "iata": "ALC",
+      "name": "Alicante-Elche Airport",
+      "city": "Alicante-Elche Airport",
+      "country": "ES",
+      "lat": 38.28217,
+      "lon": -0.55816,
+      "is_base": false
+    },
+    "AMS": {
+      "iata": "AMS",
+      "name": "Amsterdam Airport Schiphol",
+      "city": "Amsterdam Airport Schiphol",
+      "country": "NL",
+      "lat": 52.3103,
+      "lon": 4.76028,
+      "is_base": false
+    },
+    "AOI": {
+      "iata": "AOI",
+      "name": "Ancona Falconara Airport",
+      "city": "Ancona Falconara Airport",
+      "country": "IT",
+      "lat": 43.61634,
+      "lon": 13.36232,
+      "is_base": false
+    },
+    "ARW": {
+      "iata": "ARW",
+      "name": "Arad Airport",
+      "city": "Arad Airport",
+      "country": "RO",
+      "lat": 46.17655,
+      "lon": 21.26202,
+      "is_base": false
+    },
+    "BVC": {
+      "iata": "BVC",
+      "name": "Aristides Pereira International Airport",
+      "city": "Aristides Pereira International Airport",
+      "country": "CV",
+      "lat": 16.13624,
+      "lon": -22.8889,
+      "is_base": false
+    },
+    "ATH": {
+      "iata": "ATH",
+      "name": "Athens Eleftherios Venizelos International Airport",
+      "city": "Athens Eleftherios Venizelos International Airport",
+      "country": "GR",
+      "lat": 37.93636,
+      "lon": 23.94447,
+      "is_base": false
+    },
+    "BCN": {
+      "iata": "BCN",
+      "name": "Barcelona-El Prat Airport",
+      "city": "Barcelona-El Prat Airport",
+      "country": "ES",
+      "lat": 41.29708,
+      "lon": 2.07846,
+      "is_base": false
+    },
+    "BRI": {
+      "iata": "BRI",
+      "name": "Bari Karol Wojtyla Airport",
+      "city": "Bari Karol Wojtyla Airport",
+      "country": "IT",
+      "lat": 41.13697,
+      "lon": 16.76188,
+      "is_base": false
+    },
+    "BVA": {
+      "iata": "BVA",
+      "name": "Beauvais-Tille Airport",
+      "city": "Beauvais-Tille Airport",
+      "country": "FR",
+      "lat": 49.45444,
+      "lon": 2.11278,
+      "is_base": false
+    },
+    "BER": {
+      "iata": "BER",
+      "name": "Berlin Brandenburg Airport",
+      "city": "Berlin Brandenburg Airport",
+      "country": "DE",
+      "lat": 52.36213,
+      "lon": 13.50168,
+      "is_base": false
+    },
+    "BHX": {
+      "iata": "BHX",
+      "name": "Birmingham Airport",
+      "city": "Birmingham Airport",
+      "country": "GB",
+      "lat": 52.45386,
+      "lon": -1.74803,
+      "is_base": false
+    },
+    "BDS": {
+      "iata": "BDS",
+      "name": "Brindisi - Salento Airport",
+      "city": "Brindisi - Salento Airport",
+      "country": "IT",
+      "lat": 40.65763,
+      "lon": 17.94703,
+      "is_base": false
+    },
+    "CRL": {
+      "iata": "CRL",
+      "name": "Brussels South Charleroi Airport",
+      "city": "Brussels South Charleroi Airport",
+      "country": "BE",
+      "lat": 50.4592,
+      "lon": 4.45382,
+      "is_base": false
+    },
+    "BUD": {
+      "iata": "BUD",
+      "name": "Budapest Ferenc Liszt International Airport",
+      "city": "Budapest Ferenc Liszt International Airport",
+      "country": "HU",
+      "lat": 47.43693,
+      "lon": 19.25559,
+      "is_base": false
+    },
+    "CAG": {
+      "iata": "CAG",
+      "name": "Cagliari Elmas Airport",
+      "city": "Cagliari Elmas Airport",
+      "country": "IT",
+      "lat": 39.25147,
+      "lon": 9.05428,
+      "is_base": false
+    },
+    "CAI": {
+      "iata": "CAI",
+      "name": "Cairo International Airport",
+      "city": "Cairo International Airport",
+      "country": "EG",
+      "lat": 30.12194,
+      "lon": 31.40556,
+      "is_base": false
+    },
+    "CLJ": {
+      "iata": "CLJ",
+      "name": "Cluj-Napoca International Airport",
+      "city": "Cluj-Napoca International Airport",
+      "country": "RO",
+      "lat": 46.78517,
+      "lon": 23.68617,
+      "is_base": false
+    },
+    "ADB": {
+      "iata": "ADB",
+      "name": "Izmir Adnan Menderes International Airport",
+      "city": "Izmir Adnan Menderes International Airport",
+      "country": "TR",
+      "lat": 38.29239,
+      "lon": 27.15695,
+      "is_base": false
+    },
+    "ACE": {
+      "iata": "ACE",
+      "name": "Lanzarote Airport",
+      "city": "Lanzarote Airport",
+      "country": "ES",
+      "lat": 28.95027,
+      "lon": -13.60556,
+      "is_base": false
+    },
+    "AGP": {
+      "iata": "AGP",
+      "name": "Malaga Airport",
+      "city": "Malaga Airport",
+      "country": "ES",
+      "lat": 36.6749,
+      "lon": -4.49911,
+      "is_base": false
+    },
+    "ARN": {
+      "iata": "ARN",
+      "name": "Stockholm Arlanda Airport",
+      "city": "Stockholm Arlanda Airport",
+      "country": "SE",
+      "lat": 59.652,
+      "lon": 17.93132,
+      "is_base": false
+    }
+  },
+  "routes": [
+    {
+      "from": "BLQ",
+      "to": "ACE",
+      "airlines": [
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            4
+          ],
+          "sample_times": [
+            "12:30"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BLQ",
+      "to": "AGP",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            3,
+            4,
+            5,
+            7
+          ],
+          "sample_times": [
+            "05:45",
+            "11:25",
+            "15:50",
+            "17:05"
+          ]
+        },
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            1
+          ],
+          "sample_times": [
+            "15:05"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BLQ",
+      "to": "AHO",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            2,
+            3,
+            4,
+            5,
+            7
+          ],
+          "sample_times": [
+            "09:25",
+            "11:10",
+            "11:25",
+            "14:10"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BLQ",
+      "to": "AMS",
+      "airlines": [
+        {
+          "name": "KLM",
+          "iata": "KL",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "13:00"
+          ]
+        },
+        {
+          "name": "KLM Cityhopper",
+          "iata": "WA",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "06:35",
+            "13:00",
+            "17:10"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BLQ",
+      "to": "ARW",
+      "airlines": [
+        {
+          "name": "Wizz Air Malta",
+          "iata": "W4",
+          "days": [
+            4,
+            7
+          ],
+          "sample_times": [
+            "07:10",
+            "16:50"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BLQ",
+      "to": "ATH",
+      "airlines": [
+        {
+          "name": "Aegean Airlines",
+          "iata": "A3",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7
+          ],
+          "sample_times": [
+            "10:20",
+            "10:30"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "ACE",
+      "to": "BLQ",
+      "airlines": [
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            4
+          ],
+          "sample_times": [
+            "07:10"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AGP",
+      "to": "BLQ",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            3,
+            4,
+            5,
+            7
+          ],
+          "sample_times": [
+            "09:25",
+            "14:45",
+            "19:10",
+            "20:25"
+          ]
+        },
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            1
+          ],
+          "sample_times": [
+            "12:05"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AHO",
+      "to": "BLQ",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            2,
+            3,
+            4,
+            5,
+            7
+          ],
+          "sample_times": [
+            "11:05",
+            "12:50",
+            "13:05",
+            "15:50"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AMS",
+      "to": "BLQ",
+      "airlines": [
+        {
+          "name": "KLM",
+          "iata": "KL",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "10:30"
+          ]
+        },
+        {
+          "name": "KLM Cityhopper",
+          "iata": "WA",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "10:30",
+            "14:40",
+            "21:15",
+            "21:20"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "VRN",
+      "to": "AMS",
+      "airlines": [
+        {
+          "name": "Transavia",
+          "iata": "HV",
+          "days": [
+            2,
+            5,
+            7
+          ],
+          "sample_times": [
+            "09:30"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "VRN",
+      "to": "BCN",
+      "airlines": [
+        {
+          "name": "Volotea",
+          "iata": "V7",
+          "days": [
+            3,
+            4,
+            7
+          ],
+          "sample_times": [
+            "06:00",
+            "07:00",
+            "14:50"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "VRN",
+      "to": "BDS",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            1,
+            2,
+            5,
+            7
+          ],
+          "sample_times": [
+            "16:00",
+            "16:55",
+            "21:35",
+            "22:10"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "VRN",
+      "to": "BHX",
+      "airlines": [
+        {
+          "name": "Jet2.com",
+          "iata": "LS",
+          "days": [
+            3,
+            6
+          ],
+          "sample_times": [
+            "10:00",
+            "13:55"
+          ]
+        },
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            1,
+            4,
+            5,
+            6
+          ],
+          "sample_times": [
+            "09:55",
+            "10:20",
+            "13:25",
+            "20:55"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "VRN",
+      "to": "BRI",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "07:40",
+            "12:10",
+            "12:30",
+            "14:05"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "VRN",
+      "to": "BVC",
+      "airlines": [
+        {
+          "name": "Neos",
+          "iata": "NO",
+          "days": [
+            4
+          ],
+          "sample_times": [
+            "08:30"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "VRN",
+      "to": "CAG",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "07:55",
+            "11:40",
+            "12:25",
+            "15:50"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AMS",
+      "to": "VRN",
+      "airlines": [
+        {
+          "name": "Transavia",
+          "iata": "HV",
+          "days": [
+            2,
+            5,
+            7
+          ],
+          "sample_times": [
+            "07:00"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BCN",
+      "to": "VRN",
+      "airlines": [
+        {
+          "name": "Volotea",
+          "iata": "V7",
+          "days": [
+            3,
+            4,
+            7
+          ],
+          "sample_times": [
+            "08:15",
+            "09:15",
+            "20:40"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BDS",
+      "to": "VRN",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            1,
+            2,
+            5,
+            7
+          ],
+          "sample_times": [
+            "14:05",
+            "15:00",
+            "19:35",
+            "20:15"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BHX",
+      "to": "VRN",
+      "airlines": [
+        {
+          "name": "Jet2.com",
+          "iata": "LS",
+          "days": [
+            3,
+            6
+          ],
+          "sample_times": [
+            "05:55",
+            "09:40"
+          ]
+        },
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            1,
+            4,
+            5,
+            6
+          ],
+          "sample_times": [
+            "06:20",
+            "06:45",
+            "09:50",
+            "17:20"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BRI",
+      "to": "VRN",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "05:50",
+            "10:20",
+            "10:40",
+            "12:15"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "CAG",
+      "to": "VRN",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "06:05",
+            "09:50",
+            "10:35",
+            "14:00"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "CAI",
+      "to": "VRN",
+      "airlines": [
+        {
+          "name": "Air Cairo",
+          "iata": "SM",
+          "days": [
+            6
+          ],
+          "sample_times": [
+            "09:10"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BGY",
+      "to": "ACE",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            2,
+            3,
+            4,
+            6
+          ],
+          "sample_times": [
+            "06:40",
+            "15:25",
+            "15:35",
+            "16:25"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BGY",
+      "to": "AGA",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            1,
+            4,
+            7
+          ],
+          "sample_times": [
+            "06:40",
+            "06:50",
+            "07:25"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BGY",
+      "to": "AGP",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            2,
+            3,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "06:00",
+            "07:10",
+            "13:15",
+            "18:45"
+          ]
+        },
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            1,
+            4,
+            5,
+            7
+          ],
+          "sample_times": [
+            "09:10",
+            "11:10",
+            "12:40",
+            "19:45"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BGY",
+      "to": "AHO",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            1,
+            3,
+            4,
+            5,
+            6
+          ],
+          "sample_times": [
+            "06:25",
+            "10:20",
+            "15:25",
+            "16:30"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BGY",
+      "to": "ALC",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            1,
+            3
+          ],
+          "sample_times": [
+            "06:15",
+            "12:50"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "ACE",
+      "to": "BGY",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            2,
+            3,
+            4,
+            6
+          ],
+          "sample_times": [
+            "10:20",
+            "19:05",
+            "19:15",
+            "20:05"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AGA",
+      "to": "BGY",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            1,
+            4,
+            7
+          ],
+          "sample_times": [
+            "09:40",
+            "09:50",
+            "10:45"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AGP",
+      "to": "BGY",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            2,
+            3,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "09:10",
+            "10:30",
+            "16:25",
+            "21:55"
+          ]
+        },
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            1,
+            4,
+            5,
+            7
+          ],
+          "sample_times": [
+            "06:10",
+            "08:10",
+            "09:40",
+            "16:45"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AHO",
+      "to": "BGY",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            1,
+            3,
+            4,
+            5,
+            6
+          ],
+          "sample_times": [
+            "08:05",
+            "12:00",
+            "17:05",
+            "18:10"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "ALC",
+      "to": "BGY",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            1,
+            3
+          ],
+          "sample_times": [
+            "09:00",
+            "15:35"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "FLR",
+      "to": "AMS",
+      "airlines": [
+        {
+          "name": "KLM Cityhopper",
+          "iata": "WA",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "06:40",
+            "11:20",
+            "13:05",
+            "17:05"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "FLR",
+      "to": "ARN",
+      "airlines": [
+        {
+          "name": "SAS",
+          "iata": "SK",
+          "days": [
+            5
+          ],
+          "sample_times": [
+            "19:05"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "FLR",
+      "to": "ATH",
+      "airlines": [
+        {
+          "name": "Aegean Airlines",
+          "iata": "A3",
+          "days": [
+            2,
+            6
+          ],
+          "sample_times": [
+            "18:40"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "FLR",
+      "to": "BCN",
+      "airlines": [
+        {
+          "name": "Vueling",
+          "iata": "VY",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "08:00",
+            "09:50"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AMS",
+      "to": "FLR",
+      "airlines": [
+        {
+          "name": "KLM Cityhopper",
+          "iata": "WA",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "08:45",
+            "10:25",
+            "14:30",
+            "20:55"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "ARN",
+      "to": "FLR",
+      "airlines": [
+        {
+          "name": "SAS",
+          "iata": "SK",
+          "days": [
+            5
+          ],
+          "sample_times": [
+            "15:10"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "ATH",
+      "to": "FLR",
+      "airlines": [
+        {
+          "name": "Aegean Airlines",
+          "iata": "A3",
+          "days": [
+            2,
+            6
+          ],
+          "sample_times": [
+            "16:35"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "TSF",
+      "to": "ACE",
+      "airlines": [
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            3
+          ],
+          "sample_times": [
+            "13:00"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "TSF",
+      "to": "AGP",
+      "airlines": [
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            2,
+            3,
+            4,
+            6,
+            7
+          ],
+          "sample_times": [
+            "10:20",
+            "13:05",
+            "13:50",
+            "20:35"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "TSF",
+      "to": "ALC",
+      "airlines": [
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            1,
+            4,
+            5,
+            7
+          ],
+          "sample_times": [
+            "10:10",
+            "12:55",
+            "15:40",
+            "20:05"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "TSF",
+      "to": "BER",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            1,
+            2,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "07:10",
+            "14:10",
+            "17:40",
+            "18:10"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "TSF",
+      "to": "BUD",
+      "airlines": [
+        {
+          "name": "BUZZ",
+          "iata": "RR",
+          "days": [
+            1,
+            2,
+            5,
+            6
+          ],
+          "sample_times": [
+            "11:55",
+            "15:20",
+            "16:45",
+            "20:30"
+          ]
+        },
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            7
+          ],
+          "sample_times": [
+            "13:40"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "TSF",
+      "to": "BVA",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            1,
+            3,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "07:20",
+            "07:50",
+            "13:10",
+            "14:35"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "TSF",
+      "to": "CLJ",
+      "airlines": [
+        {
+          "name": "Wizz Air Malta",
+          "iata": "W4",
+          "days": [
+            1,
+            5
+          ],
+          "sample_times": [
+            "14:45",
+            "14:55"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "TSF",
+      "to": "CRL",
+      "airlines": [
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            1,
+            3,
+            4,
+            7
+          ],
+          "sample_times": [
+            "08:45",
+            "18:50",
+            "20:35",
+            "21:00"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "ACE",
+      "to": "TSF",
+      "airlines": [
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            3
+          ],
+          "sample_times": [
+            "07:10"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AGP",
+      "to": "TSF",
+      "airlines": [
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            2,
+            3,
+            4,
+            6,
+            7
+          ],
+          "sample_times": [
+            "07:15",
+            "10:00",
+            "10:45",
+            "17:30"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "ALC",
+      "to": "TSF",
+      "airlines": [
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            1,
+            4,
+            5,
+            7
+          ],
+          "sample_times": [
+            "07:30",
+            "10:15",
+            "13:00",
+            "17:25"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BER",
+      "to": "TSF",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            1,
+            2,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "09:10",
+            "16:10",
+            "19:40",
+            "20:10"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BUD",
+      "to": "TSF",
+      "airlines": [
+        {
+          "name": "BUZZ",
+          "iata": "RR",
+          "days": [
+            1,
+            2,
+            5,
+            6
+          ],
+          "sample_times": [
+            "10:05",
+            "13:30",
+            "14:55",
+            "18:40"
+          ]
+        },
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            7
+          ],
+          "sample_times": [
+            "15:35"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "BVA",
+      "to": "TSF",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            1,
+            3,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "09:40",
+            "10:10",
+            "12:35",
+            "15:30"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "CLJ",
+      "to": "TSF",
+      "airlines": [
+        {
+          "name": "Wizz Air Malta",
+          "iata": "W4",
+          "days": [
+            1,
+            5
+          ],
+          "sample_times": [
+            "13:20",
+            "13:40"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "CRL",
+      "to": "TSF",
+      "airlines": [
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            1,
+            3,
+            4,
+            7
+          ],
+          "sample_times": [
+            "06:50",
+            "16:55",
+            "18:40",
+            "19:00"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "LIN",
+      "to": "AHO",
+      "airlines": [
+        {
+          "name": "ITA Airways",
+          "iata": "AZ",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "07:00",
+            "19:35",
+            "22:00"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "LIN",
+      "to": "AMS",
+      "airlines": [
+        {
+          "name": "Carpatair",
+          "iata": "V3",
+          "days": [
+            6
+          ],
+          "sample_times": [
+            "19:25"
+          ]
+        },
+        {
+          "name": "German Airways",
+          "iata": "ZQ",
+          "days": [
+            6,
+            7
+          ],
+          "sample_times": [
+            "19:25",
+            "19:45"
+          ]
+        },
+        {
+          "name": "ITA Airways",
+          "iata": "AZ",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "09:00",
+            "17:15"
+          ]
+        },
+        {
+          "name": "KLM",
+          "iata": "KL",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "06:30",
+            "10:55",
+            "13:00",
+            "16:50"
+          ]
+        },
+        {
+          "name": "KLM Cityhopper",
+          "iata": "WA",
+          "days": [
+            1,
+            3,
+            4,
+            5,
+            6
+          ],
+          "sample_times": [
+            "19:25",
+            "21:20"
+          ]
+        },
+        {
+          "name": "Transavia",
+          "iata": "HV",
+          "days": [
+            6,
+            7
+          ],
+          "sample_times": [
+            "10:55",
+            "16:50"
+          ]
+        },
+        {
+          "name": "easyJet Europe",
+          "iata": "EC",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "06:55",
+            "18:35",
+            "18:40",
+            "18:50"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "LIN",
+      "to": "AOI",
+      "airlines": [
+        {
+          "name": "DAT",
+          "iata": "DX",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "sample_times": [
+            "11:25",
+            "20:15"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "LIN",
+      "to": "ARN",
+      "airlines": [
+        {
+          "name": "SAS",
+          "iata": "SK",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "sample_times": [
+            "12:55"
+          ]
+        },
+        {
+          "name": "SAS Connect",
+          "iata": "SL",
+          "days": [
+            3,
+            6,
+            7
+          ],
+          "sample_times": [
+            "12:55",
+            "19:05"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "LIN",
+      "to": "BCN",
+      "airlines": [
+        {
+          "name": "easyJet Europe",
+          "iata": "EC",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7
+          ],
+          "sample_times": [
+            "16:55"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AHO",
+      "to": "LIN",
+      "airlines": [
+        {
+          "name": "ITA Airways",
+          "iata": "AZ",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "07:00",
+            "08:55",
+            "21:40"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AMS",
+      "to": "LIN",
+      "airlines": [
+        {
+          "name": "Carpatair",
+          "iata": "V3",
+          "days": [
+            6
+          ],
+          "sample_times": [
+            "17:00"
+          ]
+        },
+        {
+          "name": "German Airways",
+          "iata": "ZQ",
+          "days": [
+            6,
+            7
+          ],
+          "sample_times": [
+            "17:00",
+            "17:25"
+          ]
+        },
+        {
+          "name": "ITA Airways",
+          "iata": "AZ",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "11:50",
+            "20:05"
+          ]
+        },
+        {
+          "name": "KLM",
+          "iata": "KL",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "08:25",
+            "10:15",
+            "10:20",
+            "14:15"
+          ]
+        },
+        {
+          "name": "KLM Cityhopper",
+          "iata": "WA",
+          "days": [
+            1,
+            3,
+            4,
+            5,
+            6
+          ],
+          "sample_times": [
+            "17:00",
+            "18:45"
+          ]
+        },
+        {
+          "name": "Transavia",
+          "iata": "HV",
+          "days": [
+            6,
+            7
+          ],
+          "sample_times": [
+            "08:25",
+            "14:15"
+          ]
+        },
+        {
+          "name": "easyJet Europe",
+          "iata": "EC",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "09:35",
+            "09:40",
+            "11:00",
+            "21:20"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AOI",
+      "to": "LIN",
+      "airlines": [
+        {
+          "name": "DAT",
+          "iata": "DX",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "sample_times": [
+            "09:40"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "MXP",
+      "to": "ACE",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            2,
+            3,
+            7
+          ],
+          "sample_times": [
+            "05:45",
+            "12:55"
+          ]
+        },
+        {
+          "name": "easyJet Europe",
+          "iata": "EC",
+          "days": [
+            2,
+            4,
+            6
+          ],
+          "sample_times": [
+            "07:50",
+            "08:30",
+            "12:05"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "MXP",
+      "to": "ADB",
+      "airlines": [
+        {
+          "name": "SunExpress",
+          "iata": "XQ",
+          "days": [
+            1,
+            3,
+            4,
+            6,
+            7
+          ],
+          "sample_times": [
+            "13:40",
+            "14:00"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "MXP",
+      "to": "ADD",
+      "airlines": [
+        {
+          "name": "Ethiopian Airlines",
+          "iata": "ET",
+          "days": [
+            2,
+            4,
+            6,
+            7
+          ],
+          "sample_times": [
+            "22:55"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "MXP",
+      "to": "AGA",
+      "airlines": [
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            3,
+            6
+          ],
+          "sample_times": [
+            "12:20",
+            "12:40",
+            "20:25"
+          ]
+        },
+        {
+          "name": "Wizz Air Malta",
+          "iata": "W4",
+          "days": [
+            2,
+            6
+          ],
+          "sample_times": [
+            "05:30",
+            "17:40"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "MXP",
+      "to": "AGP",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            5
+          ],
+          "sample_times": [
+            "11:50"
+          ]
+        },
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            1,
+            4,
+            6,
+            7
+          ],
+          "sample_times": [
+            "09:55",
+            "15:25",
+            "20:00",
+            "21:20"
+          ]
+        },
+        {
+          "name": "Wizz Air Malta",
+          "iata": "W4",
+          "days": [
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "13:05"
+          ]
+        },
+        {
+          "name": "easyJet Europe",
+          "iata": "EC",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "05:55",
+            "06:50",
+            "11:35",
+            "11:55"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "ACE",
+      "to": "MXP",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            2,
+            3,
+            7
+          ],
+          "sample_times": [
+            "09:25",
+            "16:35"
+          ]
+        },
+        {
+          "name": "easyJet Europe",
+          "iata": "EC",
+          "days": [
+            2,
+            4,
+            6
+          ],
+          "sample_times": [
+            "12:00",
+            "12:35",
+            "16:10"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "ADB",
+      "to": "MXP",
+      "airlines": [
+        {
+          "name": "SunExpress",
+          "iata": "XQ",
+          "days": [
+            1,
+            3,
+            4,
+            6,
+            7
+          ],
+          "sample_times": [
+            "11:35"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "ADD",
+      "to": "MXP",
+      "airlines": [
+        {
+          "name": "Ethiopian Airlines",
+          "iata": "ET",
+          "days": [
+            2,
+            4,
+            6,
+            7
+          ],
+          "sample_times": [
+            "00:20"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AGA",
+      "to": "MXP",
+      "airlines": [
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            3,
+            6
+          ],
+          "sample_times": [
+            "07:40",
+            "15:25"
+          ]
+        },
+        {
+          "name": "Wizz Air Malta",
+          "iata": "W4",
+          "days": [
+            2,
+            6
+          ],
+          "sample_times": [
+            "08:45",
+            "20:55"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AGP",
+      "to": "MXP",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            5
+          ],
+          "sample_times": [
+            "15:00"
+          ]
+        },
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            1,
+            4,
+            6,
+            7
+          ],
+          "sample_times": [
+            "06:55",
+            "12:25",
+            "17:00",
+            "18:20"
+          ]
+        },
+        {
+          "name": "Wizz Air Malta",
+          "iata": "W4",
+          "days": [
+            2,
+            3,
+            4,
+            6,
+            7
+          ],
+          "sample_times": [
+            "16:30"
+          ]
+        },
+        {
+          "name": "easyJet Europe",
+          "iata": "EC",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "09:50",
+            "10:20",
+            "14:55",
+            "15:25"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "VCE",
+      "to": "ADB",
+      "airlines": [
+        {
+          "name": "SunExpress",
+          "iata": "XQ",
+          "days": [
+            7
+          ],
+          "sample_times": [
+            "17:40"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "VCE",
+      "to": "AGP",
+      "airlines": [
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            1,
+            3,
+            5,
+            7
+          ],
+          "sample_times": [
+            "20:20",
+            "21:00",
+            "21:05",
+            "21:20"
+          ]
+        },
+        {
+          "name": "Wizz Air Malta",
+          "iata": "W4",
+          "days": [
+            1,
+            3,
+            5,
+            7
+          ],
+          "sample_times": [
+            "16:00",
+            "18:50"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "VCE",
+      "to": "ALC",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            2,
+            4,
+            6
+          ],
+          "sample_times": [
+            "05:55",
+            "06:00",
+            "12:45"
+          ]
+        },
+        {
+          "name": "Wizz Air Malta",
+          "iata": "W4",
+          "days": [
+            2,
+            4,
+            6
+          ],
+          "sample_times": [
+            "06:30"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "VCE",
+      "to": "AMS",
+      "airlines": [
+        {
+          "name": "KLM",
+          "iata": "KL",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "17:35"
+          ]
+        },
+        {
+          "name": "KLM Cityhopper",
+          "iata": "WA",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "06:30",
+            "12:20",
+            "17:35"
+          ]
+        },
+        {
+          "name": "easyJet Europe",
+          "iata": "EC",
+          "days": [
+            1,
+            3,
+            5,
+            7
+          ],
+          "sample_times": [
+            "09:20",
+            "09:55",
+            "14:10",
+            "20:15"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "VCE",
+      "to": "ATH",
+      "airlines": [
+        {
+          "name": "Aegean Airlines",
+          "iata": "A3",
+          "days": [
+            1,
+            3,
+            5,
+            6,
+            7
+          ],
+          "sample_times": [
+            "12:40",
+            "15:15"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "ADB",
+      "to": "VCE",
+      "airlines": [
+        {
+          "name": "SunExpress",
+          "iata": "XQ",
+          "days": [
+            7
+          ],
+          "sample_times": [
+            "16:00"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AGP",
+      "to": "VCE",
+      "airlines": [
+        {
+          "name": "Ryanair",
+          "iata": "FR",
+          "days": [
+            1,
+            3,
+            5,
+            7
+          ],
+          "sample_times": [
+            "17:15",
+            "17:55",
+            "18:00",
+            "18:15"
+          ]
+        },
+        {
+          "name": "Wizz Air Malta",
+          "iata": "W4",
+          "days": [
+            1,
+            3,
+            5,
+            7
+          ],
+          "sample_times": [
+            "19:35",
+            "22:25"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "ALC",
+      "to": "VCE",
+      "airlines": [
+        {
+          "name": "MW",
+          "iata": "MW",
+          "days": [
+            2,
+            4,
+            6
+          ],
+          "sample_times": [
+            "08:50",
+            "08:55",
+            "15:35"
+          ]
+        },
+        {
+          "name": "Wizz Air Malta",
+          "iata": "W4",
+          "days": [
+            2,
+            4,
+            6
+          ],
+          "sample_times": [
+            "09:35"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "AMS",
+      "to": "VCE",
+      "airlines": [
+        {
+          "name": "KLM",
+          "iata": "KL",
+          "days": [
+            4
+          ],
+          "sample_times": [
+            "09:45"
+          ]
+        },
+        {
+          "name": "easyJet Europe",
+          "iata": "EC",
+          "days": [
+            1,
+            3,
+            5,
+            7
+          ],
+          "sample_times": [
+            "07:00",
+            "07:30",
+            "11:45",
+            "17:55"
+          ]
+        }
+      ]
+    }
+  ]
+}
