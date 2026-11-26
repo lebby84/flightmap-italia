@@ -59,9 +59,16 @@
       z-index: 999 !important;
       box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.65), 0 6px 16px rgba(0, 0, 0, 0.7);
     }
-    .price-cheap { background: linear-gradient(135deg, #059669, #10b981); }
-    .price-mid   { background: linear-gradient(135deg, #d97706, #f59e0b); color: #0f172a; border-color: #fef3c7; }
-    .price-high  { background: linear-gradient(135deg, #e11d48, #f43f5e); }
+    .price-cheap   { background: linear-gradient(135deg, #059669, #10b981); }
+    .price-mid     { background: linear-gradient(135deg, #d97706, #f59e0b); color: #0f172a; border-color: #fef3c7; }
+    .price-high    { background: linear-gradient(135deg, #e11d48, #f43f5e); }
+    .price-missing {
+      background: rgba(30, 41, 59, 0.94);
+      color: #cbd5e1;
+      border: 1.5px dashed #94a3b8;
+      font-weight: 700;
+      font-size: 10px;
+    }
 
     /* Dual Range Slider */
     .dual-slider {
@@ -289,7 +296,7 @@
               💶 Prezzi Live Ryanair
             </span>
             <button id="openWorkerConfigBtn" title="Configura URL Cloudflare Worker" class="text-[11px] text-slate-400 hover:text-white flex items-center gap-1">
-              <span id="workerStatusDot" class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>
+              <span id="workerStatusDot" class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
               <span>Configura ponte</span>
             </button>
           </div>
@@ -309,17 +316,25 @@
             <button id="searchPricesBtn" type="button" class="flex-1 py-1.5 px-3 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow transition flex items-center justify-center gap-1.5">
               <span>🔍</span> <span id="searchPricesBtnText">Cerca prezzi</span>
             </button>
-            <button id="clearPricesBtn" type="button" title="Rimuovi prezzi dalla mappa" class="hidden px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200">
+            <button id="clearPricesBtn" type="button" title="Rimuovi ricerca prezzi dalla mappa" class="hidden px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200">
               ✕
             </button>
           </div>
 
-          <div id="priceSearchStatus" class="hidden text-[11px] text-slate-300 flex items-center justify-between gap-2 pt-0.5">
-            <span id="priceStatusText" class="truncate"></span>
-            <label class="inline-flex items-center gap-1 text-[10px] text-sky-300 shrink-0 cursor-pointer">
-              <input id="onlyPricedCheckbox" type="checkbox" checked class="rounded border-slate-600 bg-slate-900 text-sky-500" />
-              <span>Solo con prezzo</span>
-            </label>
+          <div id="priceSearchStatus" class="hidden text-[11px] text-slate-300 space-y-1 pt-0.5">
+            <div class="flex items-center justify-between gap-2">
+              <span id="priceStatusText" class="truncate font-medium"></span>
+            </div>
+            <div class="flex items-center justify-between gap-2 text-[10px] text-sky-300">
+              <label class="inline-flex items-center gap-1 cursor-pointer" title="Mostra anche le rotte Ryanair operative in quei giorni il cui prezzo manca nella cache rapida">
+                <input id="includeMissingCheckbox" type="checkbox" checked class="rounded border-slate-600 bg-slate-900 text-sky-500" />
+                <span>Mostra anche N/D (sicurezza)</span>
+              </label>
+              <label class="inline-flex items-center gap-1 cursor-pointer" title="Nascondi le altre compagnie durante la ricerca prezzi Ryanair">
+                <input id="onlyPricedCheckbox" type="checkbox" checked class="rounded border-slate-600 bg-slate-900 text-sky-500" />
+                <span>Solo Ryanair</span>
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -375,7 +390,7 @@
             <button id="closeDetailBtn" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs">✕</button>
           </div>
         </div>
-        <div id="detailAirlinesList" class="p-4 max-h-[48vh] overflow-y-auto custom-scroll space-y-3"></div>
+        <div id="detailAirlinesList" class="p-4 max-h-[50vh] overflow-y-auto custom-scroll space-y-3"></div>
       </div>
 
       <!-- Quota Modal -->
@@ -398,11 +413,11 @@
           </div>
           <div class="p-5 text-sm text-slate-300 space-y-3">
             <p class="text-xs text-slate-300 leading-relaxed">
-              Incolla qui l'indirizzo del tuo <strong>Cloudflare Worker</strong> gratuito (es. <code class="text-sky-300">https://ryanair-proxy.tuonome.workers.dev</code>). Verrà salvato nel browser su questo dispositivo.
+              Indirizzo del tuo <strong>Cloudflare Worker</strong> gratuito. È già preconfigurato, ma puoi aggiornarlo qui in qualsiasi momento.
             </p>
             <div>
               <label for="workerUrlInput" class="block text-xs font-semibold text-slate-300 mb-1">URL Cloudflare Worker</label>
-              <input id="workerUrlInput" type="url" placeholder="https://ryanair-proxy.tuonome.workers.dev"
+              <input id="workerUrlInput" type="url" placeholder="https://ryanair-proxy.rioli-stefano.workers.dev"
                      class="w-full bg-slate-950 border border-slate-700 focus:border-sky-500 focus:outline-none rounded-xl px-3 py-2 text-xs text-white font-mono" />
             </div>
             <div class="flex items-center justify-end gap-2 pt-2">
@@ -416,8 +431,8 @@
   </div>
 
 <script>
-// Opzionale: se vuoi fissare l'URL del tuo Cloudflare Worker direttamente nel codice, incollalo tra le virgolette qui sotto:
-const DEFAULT_RYANAIR_WORKER_URL = "";
+// URL preconfigurato del Cloudflare Worker (funziona subito anche da smartphone senza configurazione manuale)
+const DEFAULT_RYANAIR_WORKER_URL = "https://ryanair-proxy.rioli-stefano.workers.dev";
 const WORKER_STORAGE_KEY = "flightmap_ryanair_worker_url";
 
 const BASE_ORDER = ["BLQ", "VRN", "BGY", "FLR", "TSF", "LIN", "MXP", "VCE"];
@@ -471,6 +486,7 @@ function buildDemoDataset() {
     STN: { iata: "STN", name: "London Stansted", city: "Londra (Stansted)", country: "GB", lat: 51.8850, lon: 0.2350, is_base: false },
     LHR: { iata: "LHR", name: "London Heathrow", city: "Londra (Heathrow)", country: "GB", lat: 51.4700, lon: -0.4543, is_base: false },
     BCN: { iata: "BCN", name: "Barcelona El Prat", city: "Barcellona", country: "ES", lat: 41.2974, lon: 2.0833, is_base: false },
+    SVQ: { iata: "SVQ", name: "Seville Airport", city: "Siviglia", country: "ES", lat: 37.4180, lon: -5.8931, is_base: false },
     CDG: { iata: "CDG", name: "Paris Charles de Gaulle", city: "Parigi (Charles de Gaulle)", country: "FR", lat: 49.0097, lon: 2.5479, is_base: false },
     BVA: { iata: "BVA", name: "Paris Beauvais", city: "Parigi (Beauvais)", country: "FR", lat: 49.4544, lon: 2.1128, is_base: false },
     BRU: { iata: "BRU", name: "Brussels Airport", city: "Bruxelles (Zaventem)", country: "BE", lat: 50.9010, lon: 4.4844, is_base: false },
@@ -483,6 +499,7 @@ function buildDemoDataset() {
     ["BLQ", "LHR", [{ name: "British Airways", iata: "BA", days: [1,2,3,4,5,6,7], sample_times: ["11:50","18:45"] }]],
     ["BLQ", "CDG", [{ name: "Air France", iata: "AF", days: [1,2,3,4,5,6,7], sample_times: ["06:50","12:25","17:40"] }]],
     ["BLQ", "BVA", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["08:30","20:15"] }]],
+    ["BLQ", "SVQ", [{ name: "Ryanair", iata: "FR", days: [1,3,5,6,7], sample_times: ["14:00"] }]],
     ["BLQ", "BRU", [{ name: "Brussels Airlines", iata: "SN", days: [1,3,5,7], sample_times: ["13:15","17:45"] }]],
     ["BLQ", "CRL", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["07:10","19:30"] }]],
     ["BLQ", "DUB", [{ name: "Ryanair", iata: "FR", days: [1,3,5,6,7], sample_times: ["11:05"] }]],
@@ -522,14 +539,18 @@ let state = {
   sortBy: "city",
   selectedRouteKey: null,
   darkTheme: true,
-  // Stato prezzi live Ryanair
+  // Stato prezzi live Ryanair + rete di sicurezza anti-sparizione
   workerUrl: (localStorage.getItem(WORKER_STORAGE_KEY) || DEFAULT_RYANAIR_WORKER_URL || "").trim().replace(/\/+$/, ""),
   priceOutDate: "",
   priceRetDate: "",
-  liveFaresByPair: new Map(), // "BLQ->BVA" -> fareObj
+  liveSearchActive: false,
+  liveFaresByPair: new Map(), // "BLQ->SVQ" -> fareObj
   liveTripType: null,         // "roundTrip" | "oneWay" | null
-  onlyPriced: true,
-  isSearchingPrices: false
+  onlyPriced: true,           // filtra solo Ryanair (prezzate + N/D se includeMissingRyanair=true)
+  includeMissingRyanair: true,
+  isSearchingPrices: false,
+  lastPricedCount: 0,
+  lastMissingCount: 0
 };
 
 function rebuildIndexes() {
@@ -593,6 +614,14 @@ function formatEur(val) {
   return Number(val).toLocaleString("it-IT", { minimumFractionDigits: Number.isInteger(val) ? 0 : 2, maximumFractionDigits: 2 }) + " €";
 }
 
+function isoWeekdayFromDateStr(dateStr) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr || "")) return null;
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const day = dt.getUTCDay();
+  return day === 0 ? 7 : day;
+}
+
 function timeStrToMinutes(hhmm) {
   if (!hhmm || typeof hhmm !== "string") return null;
   const parts = hhmm.trim().split(":");
@@ -613,7 +642,44 @@ function hasTimeInRange(timesArr, minM, maxM) {
 
 function isOutTimeFiltered() { return state.outMin > 0 || state.outMax < 1440; }
 function isRetTimeFiltered() { return state.retMin > 0 || state.retMax < 1440; }
-function hasLivePrices() { return state.liveFaresByPair.size > 0; }
+
+function isRyanairExpectedOnDates(route, outDate, retDate) {
+  const outDay = isoWeekdayFromDateStr(outDate);
+  if (!outDay) return false;
+  const ryanOut = (route.airlines || []).find(a => a.name === "Ryanair");
+  if (!ryanOut || !Array.isArray(ryanOut.days) || !ryanOut.days.includes(outDay)) return false;
+
+  if (isOutTimeFiltered() && ryanOut.sample_times && ryanOut.sample_times.length) {
+    if (!hasTimeInRange(ryanOut.sample_times, state.outMin, state.outMax)) return false;
+  }
+
+  if (retDate) {
+    const retDay = isoWeekdayFromDateStr(retDate);
+    if (!retDay) return false;
+    const rev = routesByPair.get(`${route.to}->${route.from}`);
+    if (!rev) return false;
+    const ryanRet = (rev.airlines || []).find(a => a.name === "Ryanair");
+    if (!ryanRet || !Array.isArray(ryanRet.days) || !ryanRet.days.includes(retDay)) return false;
+
+    if (isRetTimeFiltered() && ryanRet.sample_times && ryanRet.sample_times.length) {
+      if (!hasTimeInRange(ryanRet.sample_times, state.retMin, state.retMax)) return false;
+    }
+  }
+
+  return true;
+}
+
+function getExpectedRyanairDestinationsForSelection(outDate, retDate) {
+  const selSet = new Set(getSelectedCodes());
+  const dests = new Set();
+  for (const r of dataset.routes) {
+    if (!selSet.has(r.from) || selSet.has(r.to)) continue;
+    if (isRyanairExpectedOnDates(r, outDate, retDate)) {
+      dests.add(r.to);
+    }
+  }
+  return [...dests].sort();
+}
 
 function haversineKm(lat1, lon1, lat2, lon2) {
   const R = 6371, toRad = d => (d * Math.PI) / 180;
@@ -657,19 +723,16 @@ function buildRyanairBookingUrl(orig, dest, outDate, retDate) {
 }
 
 function buildExternalSearchLinks(orig, dest, outDate, retDate) {
-  // Google Flights
   let gfQuery = `Flights to ${dest} from ${orig}`;
   if (outDate && retDate) gfQuery += ` on ${outDate} through ${retDate}`;
   else if (outDate) gfQuery += ` on ${outDate} oneway`;
   const googleFlights = `https://www.google.com/travel/flights?q=${encodeURIComponent(gfQuery)}&curr=EUR&hl=it`;
 
-  // Skyscanner (YYMMDD)
   const toYYMMDD = d => d ? d.replace(/-/g, "").slice(2) : "";
   let skyscanner = `https://www.skyscanner.it/trasporti/voli/${orig.toLowerCase()}/${dest.toLowerCase()}/`;
   if (outDate && retDate) skyscanner += `${toYYMMDD(outDate)}/${toYYMMDD(retDate)}/`;
   else if (outDate) skyscanner += `${toYYMMDD(outDate)}/`;
 
-  // AZair (DD.MM.YYYY)
   const toDDMMYYYY = d => {
     if (!d) return "";
     const [y, m, day] = d.split("-");
@@ -695,32 +758,62 @@ function getMatchingRoutes() {
   const selSet = new Set(selCodes);
   const outFiltered = isOutTimeFiltered();
   const retFiltered = isRetTimeFiltered();
-  const pricesActive = hasLivePrices();
+  const liveActive = state.liveSearchActive;
 
-  let list = dataset.routes.filter(r =>
+  let baseList = dataset.routes.filter(r =>
     state.mode === "from"
       ? (selSet.has(r.from) && !selSet.has(r.to))
       : (selSet.has(r.to) && !selSet.has(r.from))
   );
 
-  list = list.map(r => {
-    const pairKey = `${r.from}->${r.to}`;
-    const liveFare = state.liveFaresByPair.get(pairKey) || null;
+  // Se la ricerca prezzi live ha trovato una rotta Ryanair non presente nel routes.json statico, la aggiunge comunque
+  if (liveActive && state.mode === "from") {
+    const existingKeys = new Set(baseList.map(r => `${r.from}->${r.to}`));
+    const outDay = isoWeekdayFromDateStr(state.priceOutDate);
+    for (const [pairKey, fare] of state.liveFaresByPair.entries()) {
+      if (!existingKeys.has(pairKey) && selSet.has(fare.from) && !selSet.has(fare.to) && dataset.airports[fare.to]) {
+        baseList.push({
+          from: fare.from,
+          to: fare.to,
+          airlines: [{
+            name: "Ryanair",
+            iata: "FR",
+            days: outDay ? [outDay] : [1, 2, 3, 4, 5, 6, 7],
+            sample_times: fare.outDep ? [fare.outDep] : []
+          }]
+        });
+      }
+    }
+  }
 
-    if (pricesActive && state.onlyPriced && !liveFare) return null;
+  let pricedCount = 0;
+  let missingCount = 0;
+
+  let list = baseList.map(r => {
+    const pairKey = `${r.from}->${r.to}`;
+    const liveFare = liveActive ? (state.liveFaresByPair.get(pairKey) || null) : null;
+    const ryanairExpected = liveActive && state.mode === "from"
+      ? isRyanairExpectedOnDates(r, state.priceOutDate, state.priceRetDate)
+      : false;
+    const isRyanairMissingPrice = Boolean(liveActive && !liveFare && ryanairExpected);
+
+    if (liveActive && state.onlyPriced) {
+      if (!liveFare && !(state.includeMissingRyanair && isRyanairMissingPrice)) {
+        return null;
+      }
+    }
 
     const filteredAirlines = r.airlines.filter(al => {
       if (state.airlineFilter && al.name !== state.airlineFilter) return false;
       if (state.dayFilters.size > 0 && !al.days.some(d => state.dayFilters.has(d))) return false;
-      // Se c'e un prezzo live Ryanair trovato con quei filtri orari, non scartarlo per via del campione statico
-      if (outFiltered && !(liveFare && al.name === "Ryanair")) {
+      if (outFiltered && !((liveFare || isRyanairMissingPrice) && al.name === "Ryanair")) {
         if (!hasTimeInRange(al.sample_times, state.outMin, state.outMax)) return false;
       }
       return true;
     });
     if (!filteredAirlines.length) return null;
 
-    if (retFiltered && !liveFare) {
+    if (retFiltered && !liveFare && !isRyanairMissingPrice) {
       const rev = routesByPair.get(`${r.to}->${r.from}`);
       if (!rev) return null;
       const matchingRevAirlines = rev.airlines.filter(al => {
@@ -730,8 +823,19 @@ function getMatchingRoutes() {
       if (!matchingRevAirlines.length) return null;
     }
 
-    return { ...r, airlines: filteredAirlines, _liveFare: liveFare };
+    if (liveFare) pricedCount++;
+    else if (isRyanairMissingPrice) missingCount++;
+
+    return {
+      ...r,
+      airlines: filteredAirlines,
+      _liveFare: liveFare,
+      _ryanairMissingPrice: isRyanairMissingPrice
+    };
   }).filter(Boolean);
+
+  state.lastPricedCount = pricedCount;
+  state.lastMissingCount = missingCount;
 
   list.forEach(r => {
     const allDays = new Set();
@@ -746,8 +850,8 @@ function getMatchingRoutes() {
 
   if (state.sortBy === "price") {
     list.sort((a, b) => {
-      const pa = a._liveFare ? a._liveFare.totalPrice : 999999;
-      const pb = b._liveFare ? b._liveFare.totalPrice : 999999;
+      const pa = a._liveFare ? a._liveFare.totalPrice : (a._ryanairMissingPrice ? 500000 : 999999);
+      const pb = b._liveFare ? b._liveFare.totalPrice : (b._ryanairMissingPrice ? 500000 : 999999);
       return pa - pb || a._otherAp.city.localeCompare(b._otherAp.city, "it");
     });
   } else if (state.sortBy === "city") {
@@ -843,19 +947,23 @@ function renderPriceSearchUI() {
     ? "w-2 h-2 rounded-full bg-emerald-400 inline-block"
     : "w-2 h-2 rounded-full bg-amber-400 inline-block";
 
-  const active = hasLivePrices();
+  const active = state.liveSearchActive;
   document.getElementById("clearPricesBtn").classList.toggle("hidden", !active);
   document.getElementById("priceSearchStatus").classList.toggle("hidden", !active && !state.isSearchingPrices);
   document.getElementById("onlyPricedCheckbox").checked = state.onlyPriced;
+  document.getElementById("includeMissingCheckbox").checked = state.includeMissingRyanair;
   document.getElementById("sortSelect").value = state.sortBy;
 
   const btnText = document.getElementById("searchPricesBtnText");
   btnText.textContent = state.isSearchingPrices ? "Ricerca in corso..." : "Cerca prezzi";
   document.getElementById("searchPricesBtn").disabled = state.isSearchingPrices;
 
-  if (active) {
+  if (state.isSearchingPrices) {
+    document.getElementById("priceStatusText").textContent = "Interrogo Ryanair + verifica tratte mancanti...";
+  } else if (active) {
     const label = state.liveTripType === "roundTrip" ? "A/R" : "Solo andata";
-    document.getElementById("priceStatusText").textContent = `${state.liveFaresByPair.size} tariffe ${label} trovate`;
+    const missingPart = state.lastMissingCount > 0 ? ` • ${state.lastMissingCount} N/D (verifica)` : "";
+    document.getElementById("priceStatusText").textContent = `${state.lastPricedCount} prezzi ${label}${missingPart}`;
   }
 }
 
@@ -945,7 +1053,7 @@ function renderRoutesList(routes) {
 
   document.getElementById("routeCountBadge").textContent = `${routes.length} ${routes.length === 1 ? "rotta" : "rotte"}`;
 
-  const hasAnyFilter = Boolean(state.airlineFilter || state.dayFilters.size > 0 || isOutTimeFiltered() || isRetTimeFiltered() || hasLivePrices());
+  const hasAnyFilter = Boolean(state.airlineFilter || state.dayFilters.size > 0 || isOutTimeFiltered() || isRetTimeFiltered() || state.liveSearchActive);
   document.getElementById("resetFiltersBtn").classList.toggle("hidden", !hasAnyFilter);
 
   const listEl = document.getElementById("routesList");
@@ -959,6 +1067,7 @@ function renderRoutesList(routes) {
   routes.forEach(r => {
     const key = `${r.from}->${r.to}`, selected = state.selectedRouteKey === key, other = r._otherAp;
     const fare = r._liveFare;
+    const isMissing = r._ryanairMissingPrice;
     const card = document.createElement("button");
     card.className = `w-full text-left p-3 rounded-xl border transition ${selected ? "bg-sky-500/15 border-sky-500 shadow-md" : "bg-slate-800/45 border-slate-800 hover:bg-slate-800/90 hover:border-slate-700"}`;
     const dayDots = [1,2,3,4,5,6,7].map(d => `<span class="w-4 h-4 rounded text-[9px] font-bold flex items-center justify-center ${r._allDays.includes(d) ? "bg-emerald-500/25 text-emerald-300 border border-emerald-500/40" : "bg-slate-900 text-slate-600"}">${DAY_SHORT[d]}</span>`).join("");
@@ -970,11 +1079,16 @@ function renderRoutesList(routes) {
     if (fare) {
       const tier = getPriceTierClass(fare.totalPrice, state.liveTripType === "roundTrip");
       rightTopHtml = `<span class="price-pin ${tier} shrink-0" style="cursor:pointer;transform:none;box-shadow:none">${formatEur(fare.totalPrice)}</span>`;
+    } else if (isMissing) {
+      rightTopHtml = `<span class="price-pin price-missing shrink-0" style="cursor:pointer;transform:none;box-shadow:none">Prezzo N/D</span>`;
     }
 
-    const subLineHtml = fare
-      ? `<div class="text-[11px] text-sky-300 font-mono truncate">🛫 ${fare.outDep || "--:--"}${fare.retDep ? ` • 🛬 ${fare.retDep}` : ""}</div>`
-      : `<div class="text-[11px] text-slate-400 truncate">${r.airlines.map(a => a.name).join(", ")}</div>`;
+    let subLineHtml = `<div class="text-[11px] text-slate-400 truncate">${r.airlines.map(a => a.name).join(", ")}</div>`;
+    if (fare) {
+      subLineHtml = `<div class="text-[11px] text-sky-300 font-mono truncate">🛫 ${fare.outDep || "--:--"}${fare.retDep ? ` • 🛬 ${fare.retDep}` : ""}</div>`;
+    } else if (isMissing) {
+      subLineHtml = `<div class="text-[11px] text-amber-300/90 truncate">⚠️ Volo Ryanair attivo • Verifica su sito ↗</div>`;
+    }
 
     card.innerHTML = `
       <div class="flex items-center justify-between gap-2">
@@ -1007,7 +1121,6 @@ function renderMap(routes, fitBounds = false) {
     if (ap && ap.lat != null) boundsPoints.push([ap.lat, ap.lon]);
   });
 
-  // Se in vista "Citta - Tutti" ci sono piu aeroporti di partenza con prezzo verso la stessa destinazione, teniamo il prezzo piu basso sul pin
   const bestRouteByOtherCode = new Map();
 
   routes.forEach(r => {
@@ -1015,16 +1128,29 @@ function renderMap(routes, fitBounds = false) {
     if (!fromAp || !toAp || fromAp.lat == null || toAp.lat == null) return;
     const isSel = state.selectedRouteKey === `${r.from}->${r.to}`;
     const hasFare = Boolean(r._liveFare);
+    const isMissing = Boolean(r._ryanairMissingPrice);
+
+    const lineColor = isSel
+      ? "#38bdf8"
+      : (hasFare ? "#fbbf24" : (isMissing ? "#94a3b8" : (state.mode === "from" ? "#0ea5e9" : "#10b981")));
+
     const poly = L.polyline(buildCurvedArc(fromAp, toAp), {
-      color: isSel ? "#38bdf8" : (hasFare ? "#fbbf24" : (state.mode === "from" ? "#0ea5e9" : "#10b981")),
-      weight: isSel ? 3.5 : (hasFare ? 2.1 : 1.6),
-      opacity: isSel ? 1 : (state.selectedRouteKey ? 0.25 : (hasFare ? 0.78 : 0.55)),
-      dashArray: isSel ? "8 10" : null,
+      color: lineColor,
+      weight: isSel ? 3.5 : (hasFare ? 2.1 : 1.5),
+      opacity: isSel ? 1 : (state.selectedRouteKey ? 0.25 : (hasFare ? 0.78 : (isMissing ? 0.5 : 0.55))),
+      dashArray: isSel ? "8 10" : (isMissing ? "4 6" : null),
       className: isSel ? "route-animated" : ""
     });
     poly.on("click", () => selectRoute(r));
     poly.on("mouseover", function() { if (!isSel) this.setStyle({ weight: 3.2, opacity: 0.98 }); });
-    poly.on("mouseout", function() { if (!isSel) this.setStyle({ weight: hasFare ? 2.1 : 1.6, opacity: state.selectedRouteKey ? 0.25 : (hasFare ? 0.78 : 0.55) }); });
+    poly.on("mouseout", function() {
+      if (!isSel) {
+        this.setStyle({
+          weight: hasFare ? 2.1 : 1.5,
+          opacity: state.selectedRouteKey ? 0.25 : (hasFare ? 0.78 : (isMissing ? 0.5 : 0.55))
+        });
+      }
+    });
     poly.addTo(routesLayer);
 
     const otherCode = state.mode === "from" ? r.to : r.from;
@@ -1032,7 +1158,9 @@ function renderMap(routes, fitBounds = false) {
     boundsPoints.push([otherAp.lat, otherAp.lon]);
 
     const prevBest = bestRouteByOtherCode.get(otherCode);
-    if (!prevBest || (r._liveFare && (!prevBest._liveFare || r._liveFare.totalPrice < prevBest._liveFare.totalPrice))) {
+    if (!prevBest) {
+      bestRouteByOtherCode.set(otherCode, r);
+    } else if (r._liveFare && (!prevBest._liveFare || r._liveFare.totalPrice < prevBest._liveFare.totalPrice)) {
       bestRouteByOtherCode.set(otherCode, r);
     }
   });
@@ -1048,9 +1176,9 @@ function renderMap(routes, fitBounds = false) {
     const isConnected = connectedCodes.has(code);
     const matchedRoute = bestRouteByOtherCode.get(code);
     const liveFare = matchedRoute?._liveFare || null;
+    const isMissing = Boolean(matchedRoute?._ryanairMissingPrice);
 
     if (liveFare && !isSelected) {
-      // Disegna direttamente il pill-badge con il prezzo live sul pallino della mappa!
       const tier = getPriceTierClass(liveFare.totalPrice, state.liveTripType === "roundTrip");
       const isRouteSel = state.selectedRouteKey === `${matchedRoute.from}->${matchedRoute.to}`;
       const icon = L.divIcon({
@@ -1063,6 +1191,18 @@ function renderMap(routes, fitBounds = false) {
       priceMarker.bindTooltip(`${ap.iata} • ${ap.city} (${matchedRoute.from}→${matchedRoute.to})`, { direction: "top", offset: [0, -10], className: "ap-tooltip" });
       priceMarker.on("click", () => selectRoute(matchedRoute));
       priceMarker.addTo(pricesLayer);
+    } else if (isMissing && !isSelected) {
+      const isRouteSel = state.selectedRouteKey === `${matchedRoute.from}->${matchedRoute.to}`;
+      const icon = L.divIcon({
+        className: "",
+        html: `<div class="price-pin price-missing ${isRouteSel ? "selected" : ""}">N/D</div>`,
+        iconSize: null,
+        iconAnchor: [18, 11]
+      });
+      const ndMarker = L.marker([ap.lat, ap.lon], { icon, zIndexOffset: isRouteSel ? 950 : 300 });
+      ndMarker.bindTooltip(`${ap.iata} • ${ap.city} — Volo Ryanair operativo (prezzo N/D in cache, clicca per verificare)`, { direction: "top", offset: [0, -10], className: "ap-tooltip" });
+      ndMarker.on("click", () => selectRoute(matchedRoute));
+      ndMarker.addTo(pricesLayer);
     } else {
       const marker = L.circleMarker([ap.lat, ap.lon], {
         radius: isSelected ? 9 : (isBase ? 6.5 : 5.5),
@@ -1107,8 +1247,8 @@ function renderRouteDetail() {
   const list = document.getElementById("detailAirlinesList");
   list.innerHTML = "";
 
-  // 1) Box Prezzo Live Ryanair (se disponibile per questa tratta)
-  const liveFare = state.liveFaresByPair.get(`${route.from}->${route.to}`);
+  // 1) Box Prezzo Live Ryanair oppure Box Rete di Sicurezza "Prezzo N/D"
+  const liveFare = state.liveSearchActive ? state.liveFaresByPair.get(`${route.from}->${route.to}`) : null;
   if (liveFare) {
     const ryanUrl = buildRyanairBookingUrl(route.from, route.to, state.priceOutDate, state.priceRetDate);
     const isRT = state.liveTripType === "roundTrip";
@@ -1137,6 +1277,24 @@ function renderRouteDetail() {
         </div>` : ""}
       </div>`;
     list.appendChild(fareCard);
+  } else if (route._ryanairMissingPrice && state.priceOutDate) {
+    const ryanUrl = buildRyanairBookingUrl(route.from, route.to, state.priceOutDate, state.priceRetDate);
+    const ndCard = document.createElement("div");
+    ndCard.className = "p-3.5 rounded-xl bg-slate-800/90 border border-dashed border-amber-400/60 space-y-2";
+    ndCard.innerHTML = `
+      <div class="flex items-start justify-between gap-2">
+        <div>
+          <div class="text-[10px] font-bold uppercase tracking-wider text-amber-300">⚠️ Prezzo N/D nella cache rapida</div>
+          <div class="text-xs text-slate-200 mt-1 leading-relaxed">
+            La tratta Ryanair risulta <strong>operativa</strong> in queste date (${state.priceOutDate}${state.priceRetDate ? ` → ${state.priceRetDate}` : ""}), ma il Fare Finder non ha restituito la tariffa (es. data lontana o pochi posti rimasti).
+          </div>
+        </div>
+      </div>
+      <a href="${ryanUrl}" target="_blank" rel="noopener noreferrer"
+         class="block w-full text-center py-2 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow transition">
+        Verifica prezzo reale su Ryanair ↗
+      </a>`;
+    list.appendChild(ndCard);
   }
 
   // 2) Compagnie e giorni/orari operativi
@@ -1187,7 +1345,7 @@ function renderRouteDetail() {
     }
   }
 
-  // 4) Opzione B: Link diretti precompilati per tutte le compagnie (Google Flights, Skyscanner, AZair)
+  // 4) Link diretti precompilati per tutte le compagnie
   const links = buildExternalSearchLinks(route.from, route.to, state.priceOutDate, state.priceRetDate);
   const extBox = document.createElement("div");
   extBox.className = "pt-2 border-t border-slate-800";
@@ -1218,10 +1376,10 @@ function renderAll(fitBounds = false) {
   renderBasePills();
   renderDayFilters();
   renderTimeSlidersUI();
-  renderPriceSearchUI();
   renderAirlineDropdown();
   renderQuotaStatus();
   const routes = getMatchingRoutes();
+  renderPriceSearchUI();
   renderRoutesList(routes);
   renderMap(routes, fitBounds);
   renderRouteDetail();
@@ -1246,7 +1404,6 @@ async function executeLiveRyanairSearch() {
     return;
   }
 
-  // Se l'utente era in modalita "Arrivo a", la ricerca prezzi A/R parte dall'aeroporto selezionato
   if (state.mode !== "from") {
     state.mode = "from";
     document.getElementById("modeFromBtn").className = "py-1 text-xs font-semibold rounded-lg transition bg-sky-600 text-white shadow";
@@ -1263,6 +1420,8 @@ async function executeLiveRyanairSearch() {
   renderPriceSearchUI();
 
   try {
+    const expectedDests = getExpectedRyanairDestinationsForSelection(outDate, retDate);
+
     const qs = new URLSearchParams({
       origins: origins.join(","),
       outDate,
@@ -1273,6 +1432,9 @@ async function executeLiveRyanairSearch() {
       qs.set("retDate", retDate);
       qs.set("retTimeFrom", formatMinutes(state.retMin));
       qs.set("retTimeTo", formatMinutes(state.retMax));
+    }
+    if (expectedDests.length) {
+      qs.set("expected", expectedDests.slice(0, 60).join(","));
     }
 
     const resp = await fetch(`${state.workerUrl}?${qs.toString()}`);
@@ -1292,9 +1454,10 @@ async function executeLiveRyanairSearch() {
 
     state.liveFaresByPair = mapFares;
     state.liveTripType = data.tripType || (retDate ? "roundTrip" : "oneWay");
-    if (mapFares.size > 0) {
-      state.sortBy = "price";
-    } else {
+    state.liveSearchActive = true;
+    state.sortBy = "price";
+
+    if (mapFares.size === 0 && expectedDests.length === 0) {
       alert("Nessun volo Ryanair trovato per le date e fasce orarie selezionate.");
     }
   } catch (err) {
@@ -1306,8 +1469,11 @@ async function executeLiveRyanairSearch() {
 }
 
 function clearLivePrices() {
+  state.liveSearchActive = false;
   state.liveFaresByPair.clear();
   state.liveTripType = null;
+  state.lastPricedCount = 0;
+  state.lastMissingCount = 0;
   if (state.sortBy === "price") state.sortBy = "city";
   renderAll(false);
 }
@@ -1319,6 +1485,7 @@ function selectAirport(code, fitBounds = true) {
   state.selectedCityGroup = null;
   state.selectedRouteKey = null;
   state.airlineFilter = "";
+  state.liveSearchActive = false;
   state.liveFaresByPair.clear();
   state.liveTripType = null;
   if (state.sortBy === "price") state.sortBy = "city";
@@ -1331,6 +1498,7 @@ function selectCityGroup(cityName, fitBounds = true) {
   state.selectedAirport = null;
   state.selectedRouteKey = null;
   state.airlineFilter = "";
+  state.liveSearchActive = false;
   state.liveFaresByPair.clear();
   state.liveTripType = null;
   if (state.sortBy === "price") state.sortBy = "city";
@@ -1407,6 +1575,7 @@ document.getElementById("priceRetDate").addEventListener("change", e => {
 document.getElementById("searchPricesBtn").onclick = executeLiveRyanairSearch;
 document.getElementById("clearPricesBtn").onclick = clearLivePrices;
 document.getElementById("onlyPricedCheckbox").onchange = e => { state.onlyPriced = e.target.checked; renderAll(false); };
+document.getElementById("includeMissingCheckbox").onchange = e => { state.includeMissingRyanair = e.target.checked; renderAll(false); };
 
 // Worker Modal bindings
 function openWorkerModal() {
@@ -1419,7 +1588,7 @@ document.getElementById("cancelWorkerBtn").onclick = () => document.getElementBy
 document.getElementById("workerModal").onclick = e => { if (e.target.id === "workerModal") document.getElementById("workerModal").classList.add("hidden"); };
 document.getElementById("saveWorkerBtn").onclick = () => {
   const val = document.getElementById("workerUrlInput").value.trim().replace(/\/+$/, "");
-  state.workerUrl = val;
+  state.workerUrl = val || DEFAULT_RYANAIR_WORKER_URL;
   if (val) localStorage.setItem(WORKER_STORAGE_KEY, val);
   else localStorage.removeItem(WORKER_STORAGE_KEY);
   document.getElementById("workerModal").classList.add("hidden");
@@ -1567,7 +1736,6 @@ function applyLoadedJson(data) {
 }
 
 async function tryAutoLoadJson() {
-  // Imposta data minima odierna nei selettori
   const todayIso = new Date().toISOString().slice(0, 10);
   document.getElementById("priceOutDate").min = todayIso;
   document.getElementById("priceRetDate").min = todayIso;
