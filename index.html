@@ -36,6 +36,76 @@
       pointer-events: none;
       transition: opacity 0.15s ease;
     }
+
+    /* Dual Range Slider */
+    .dual-slider {
+      position: relative;
+      height: 24px;
+      display: flex;
+      align-items: center;
+    }
+    .dual-slider-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 5px;
+      border-radius: 999px;
+      background: #1e293b;
+    }
+    .dual-slider-fill {
+      position: absolute;
+      height: 5px;
+      border-radius: 999px;
+    }
+    .dual-slider input[type="range"] {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 24px;
+      margin: 0;
+      background: transparent;
+      pointer-events: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .dual-slider input[type="range"]::-webkit-slider-runnable-track {
+      height: 5px;
+      background: transparent;
+    }
+    .dual-slider input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      pointer-events: auto;
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 2px solid #f8fafc;
+      cursor: pointer;
+      margin-top: -5.5px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+      transition: transform 0.1s ease;
+    }
+    .dual-slider input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.12);
+    }
+    .dual-slider input[type="range"]::-moz-range-track {
+      height: 5px;
+      background: transparent;
+    }
+    .dual-slider input[type="range"]::-moz-range-thumb {
+      pointer-events: auto;
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 2px solid #f8fafc;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+    }
+    .slider-sky input[type="range"]::-webkit-slider-thumb { background: #0284c7; }
+    .slider-sky input[type="range"]::-moz-range-thumb { background: #0284c7; }
+    .slider-emerald input[type="range"]::-webkit-slider-thumb { background: #059669; }
+    .slider-emerald input[type="range"]::-moz-range-thumb { background: #059669; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 select-none">
@@ -58,10 +128,10 @@
   <div class="flex h-full w-full relative">
 
     <!-- Left Sidebar -->
-    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-30 w-full max-w-[390px] bg-slate-900/95 backdrop-blur-md border-r border-slate-800 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-200 shadow-2xl">
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-30 w-full max-w-[395px] bg-slate-900/95 backdrop-blur-md border-r border-slate-800 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-200 shadow-2xl">
 
       <!-- Header -->
-      <div class="p-4 border-b border-slate-800 flex items-center justify-between gap-2">
+      <div class="p-3.5 border-b border-slate-800 flex items-center justify-between gap-2">
         <div class="flex items-center gap-2.5 min-w-0">
           <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-lg shadow-md shrink-0">✈️</div>
           <div class="min-w-0">
@@ -85,7 +155,7 @@
       <div id="quotaBanner" class="hidden px-4 py-2 border-b border-slate-800 text-xs"></div>
 
       <!-- Quick Base Airports Bar -->
-      <div class="px-4 pt-3 pb-2 border-b border-slate-800/80">
+      <div class="px-3.5 pt-2.5 pb-2 border-b border-slate-800/80">
         <div class="flex items-center justify-between mb-1.5">
           <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">I tuoi 8 aeroporti</span>
           <span id="routeCountBadge" class="text-[11px] font-semibold text-sky-400">0 rotte</span>
@@ -94,7 +164,7 @@
       </div>
 
       <!-- Controls: Mode + Search + Filters -->
-      <div class="p-4 space-y-3 border-b border-slate-800">
+      <div class="p-3.5 space-y-2.5 border-b border-slate-800">
         <!-- Direction Mode -->
         <div class="grid grid-cols-2 bg-slate-950 p-1 rounded-xl border border-slate-800">
           <button id="modeFromBtn" class="py-1.5 text-xs font-semibold rounded-lg transition bg-sky-600 text-white shadow">
@@ -105,13 +175,13 @@
           </button>
         </div>
 
-        <!-- Autocomplete Airport Search -->
+        <!-- Autocomplete Airport / City Search -->
         <div class="relative">
           <input id="airportSearch" type="text" autocomplete="off"
-                 placeholder="Cerca aeroporto (es. BLQ, Stoccolma, ARN)..."
+                 placeholder="Cerca città o aeroporto (es. Bruxelles, Parigi, BLQ)..."
                  class="w-full bg-slate-950 border border-slate-700 focus:border-sky-500 focus:outline-none rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 pr-8" />
           <button id="clearSearchBtn" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs">✕</button>
-          <div id="searchDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto custom-scroll z-40"></div>
+          <div id="searchDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-64 overflow-y-auto custom-scroll z-40"></div>
         </div>
 
         <!-- Airline Filter & Sort -->
@@ -134,13 +204,58 @@
           </div>
           <div id="dayFilterButtons" class="grid grid-cols-7 gap-1"></div>
         </div>
+
+        <!-- Departure Time Ranges (Andata & Ritorno) -->
+        <div class="bg-slate-950/75 border border-slate-800 rounded-xl px-3 py-2">
+          <button id="toggleTimesAccordion" type="button" class="w-full flex items-center justify-between text-left">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold text-slate-200">Orari di partenza</span>
+              <span id="timeActiveBadge" class="hidden px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30">Attivo</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="resetTimesBtn" class="hidden text-[11px] text-sky-400 hover:underline">Reset</span>
+              <span id="timesChevron" class="text-slate-400 text-xs transition-transform duration-150">▲</span>
+            </div>
+          </button>
+
+          <div id="timesAccordionBody" class="mt-2.5 space-y-2.5">
+            <!-- Andata -->
+            <div>
+              <div class="flex items-center justify-between text-[11px] mb-1">
+                <span class="font-medium text-slate-300">Andata</span>
+                <span id="outTimeLabel" class="font-mono text-sky-300 font-semibold">00:00 - 23:59</span>
+              </div>
+              <div class="dual-slider slider-sky">
+                <div class="dual-slider-track"></div>
+                <div id="outSliderFill" class="dual-slider-fill bg-sky-500" style="left:0%;width:100%"></div>
+                <input id="outMinRange" type="range" min="0" max="1440" step="30" value="0" />
+                <input id="outMaxRange" type="range" min="0" max="1440" step="30" value="1440" />
+              </div>
+            </div>
+
+            <!-- Ritorno -->
+            <div>
+              <div class="flex items-center justify-between text-[11px] mb-1">
+                <span class="font-medium text-slate-300">Ritorno</span>
+                <span id="retTimeLabel" class="font-mono text-emerald-300 font-semibold">00:00 - 23:59</span>
+              </div>
+              <div class="dual-slider slider-emerald">
+                <div class="dual-slider-track"></div>
+                <div id="retSliderFill" class="dual-slider-fill bg-emerald-500" style="left:0%;width:100%"></div>
+                <input id="retMinRange" type="range" min="0" max="1440" step="30" value="0" />
+                <input id="retMaxRange" type="range" min="0" max="1440" step="30" value="1440" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Selected Airport Header -->
-      <div id="activeAirportHeader" class="px-4 py-2.5 bg-slate-800/50 border-b border-slate-800 flex items-center justify-between">
+      <!-- Selected Airport / City Header -->
+      <div id="activeAirportHeader" class="px-3.5 py-2 bg-slate-800/50 border-b border-slate-800 flex items-center justify-between gap-2">
         <div class="min-w-0">
-          <div class="text-xs text-slate-400" id="activeDirectionLabel">Voli diretti in partenza da</div>
+          <div class="text-[11px] text-slate-400" id="activeDirectionLabel">Voli diretti in partenza da</div>
           <div class="font-bold text-sm text-white truncate" id="activeAirportTitle">Bologna (BLQ)</div>
+          <div id="activeCityPills" class="hidden flex flex-wrap gap-1 mt-1"></div>
         </div>
         <button id="resetFiltersBtn" class="hidden text-xs px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 shrink-0">Reset filtri</button>
       </div>
@@ -167,7 +282,7 @@
       </div>
 
       <!-- Route Detail Panel (Floating Bottom Right) -->
-      <div id="routeDetailCard" class="hidden fixed md:absolute bottom-4 right-4 left-4 md:left-auto md:w-[410px] z-20 bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
+      <div id="routeDetailCard" class="hidden fixed md:absolute bottom-4 right-4 left-4 md:left-auto md:w-[420px] z-20 bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
         <div class="p-4 border-b border-slate-800 flex items-start justify-between gap-3 bg-gradient-to-r from-slate-900 to-slate-800/70">
           <div class="min-w-0">
             <div class="flex items-center gap-2">
@@ -186,7 +301,7 @@
             <button id="closeDetailBtn" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs">✕</button>
           </div>
         </div>
-        <div id="detailAirlinesList" class="p-4 max-h-[42vh] overflow-y-auto custom-scroll space-y-3"></div>
+        <div id="detailAirlinesList" class="p-4 max-h-[44vh] overflow-y-auto custom-scroll space-y-3"></div>
       </div>
 
       <!-- Quota Modal -->
@@ -196,7 +311,7 @@
             <h2 class="font-bold text-white text-base">Stato Cache e Quota API</h2>
             <button id="closeQuotaModal" class="text-slate-400 hover:text-white">✕</button>
           </div>
-          <div id="quotaModalBody" class="p-5 text-sm text-slate-300 space-y-3"></div>
+          <div id="quotaModalBody" class="p-5 text-sm text-slate-300 space-y-3 max-h-[75vh] overflow-y-auto custom-scroll"></div>
         </div>
       </div>
     </main>
@@ -206,6 +321,58 @@
 const BASE_ORDER = ["BLQ", "VRN", "BGY", "FLR", "TSF", "LIN", "MXP", "VCE"];
 const DAY_SHORT = ["", "L", "M", "M", "G", "V", "S", "D"];
 const DAY_LABEL = ["", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
+
+// Aree metropolitane note con piu aeroporti (usate per generare "<Citta> - Tutti")
+const METRO_GROUPS = {
+  "Milano": ["LIN", "MXP", "BGY"],
+  "Venezia": ["VCE", "TSF"],
+  "Roma": ["FCO", "CIA"],
+  "Parigi": ["CDG", "ORY", "BVA"],
+  "Londra": ["LHR", "LGW", "STN", "LTN", "LCY", "SEN"],
+  "Bruxelles": ["BRU", "CRL"],
+  "Stoccolma": ["ARN", "NYO", "BMA", "VST"],
+  "Varsavia": ["WAW", "WMI", "RDO"],
+  "Bucarest": ["OTP", "BBU"],
+  "Istanbul": ["IST", "SAW"],
+  "Francoforte": ["FRA", "HHN"],
+  "Monaco di Baviera": ["MUC", "FMM"],
+  "Düsseldorf": ["DUS", "NRN"],
+  "Oslo": ["OSL", "TRF"],
+  "Tenerife": ["TFS", "TFN"],
+  "Glasgow": ["GLA", "PIK"],
+  "Belfast": ["BFS", "BHD"],
+  "Creta": ["HER", "CHQ"],
+  "Barcellona": ["BCN", "GRO", "REU"]
+};
+
+const CITY_NAME_NORMALIZE = {
+  "london": "Londra",
+  "paris": "Parigi",
+  "brussels": "Bruxelles",
+  "rome": "Roma",
+  "milan": "Milano",
+  "venice": "Venezia",
+  "stockholm": "Stoccolma",
+  "warsaw": "Varsavia",
+  "bucharest": "Bucarest",
+  "frankfurt": "Francoforte",
+  "frankfurt am main": "Francoforte",
+  "munich": "Monaco di Baviera",
+  "monaco": "Monaco di Baviera",
+  "vienna": "Vienna",
+  "prague": "Praga",
+  "lisbon": "Lisbona",
+  "athens": "Atene",
+  "dublin": "Dublino",
+  "edinburgh": "Edimburgo",
+  "krakow": "Cracovia",
+  "kraków": "Cracovia",
+  "barcelona": "Barcellona",
+  "berlin": "Berlino",
+  "zurich": "Zurigo",
+  "copenhagen": "Copenaghen",
+  "cologne": "Colonia"
+};
 
 function buildDemoDataset() {
   const airports = {
@@ -217,108 +384,43 @@ function buildDemoDataset() {
     LIN: { iata: "LIN", name: "Milano Linate", city: "Milano", country: "IT", lat: 45.4451, lon: 9.2767, is_base: true },
     MXP: { iata: "MXP", name: "Milano Malpensa", city: "Milano", country: "IT", lat: 45.6306, lon: 8.7281, is_base: true },
     VCE: { iata: "VCE", name: "Venezia Marco Polo", city: "Venezia", country: "IT", lat: 45.5053, lon: 12.3519, is_base: true },
-    ARN: { iata: "ARN", name: "Stockholm Arlanda", city: "Stoccolma", country: "SE", lat: 59.6519, lon: 17.9186, is_base: false },
-    STN: { iata: "STN", name: "London Stansted", city: "Londra", country: "GB", lat: 51.8850, lon: 0.2350, is_base: false },
-    LHR: { iata: "LHR", name: "London Heathrow", city: "Londra", country: "GB", lat: 51.4700, lon: -0.4543, is_base: false },
+    ARN: { iata: "ARN", name: "Stockholm Arlanda", city: "Stoccolma (Arlanda)", country: "SE", lat: 59.6519, lon: 17.9186, is_base: false },
+    STN: { iata: "STN", name: "London Stansted", city: "Londra (Stansted)", country: "GB", lat: 51.8850, lon: 0.2350, is_base: false },
+    LHR: { iata: "LHR", name: "London Heathrow", city: "Londra (Heathrow)", country: "GB", lat: 51.4700, lon: -0.4543, is_base: false },
     MAD: { iata: "MAD", name: "Madrid Barajas", city: "Madrid", country: "ES", lat: 40.4983, lon: -3.5676, is_base: false },
     BCN: { iata: "BCN", name: "Barcelona El Prat", city: "Barcellona", country: "ES", lat: 41.2974, lon: 2.0833, is_base: false },
     PMI: { iata: "PMI", name: "Palma de Mallorca", city: "Palma di Maiorca", country: "ES", lat: 39.5517, lon: 2.7388, is_base: false },
-    CDG: { iata: "CDG", name: "Paris Charles de Gaulle", city: "Parigi", country: "FR", lat: 49.0097, lon: 2.5479, is_base: false },
-    BVA: { iata: "BVA", name: "Paris Beauvais", city: "Parigi", country: "FR", lat: 49.4544, lon: 2.1128, is_base: false },
+    CDG: { iata: "CDG", name: "Paris Charles de Gaulle", city: "Parigi (Charles de Gaulle)", country: "FR", lat: 49.0097, lon: 2.5479, is_base: false },
+    BVA: { iata: "BVA", name: "Paris Beauvais", city: "Parigi (Beauvais)", country: "FR", lat: 49.4544, lon: 2.1128, is_base: false },
+    BRU: { iata: "BRU", name: "Brussels Airport", city: "Bruxelles (Zaventem)", country: "BE", lat: 50.9010, lon: 4.4844, is_base: false },
+    CRL: { iata: "CRL", name: "Brussels South Charleroi", city: "Bruxelles (Charleroi)", country: "BE", lat: 50.4592, lon: 4.4538, is_base: false },
     MUC: { iata: "MUC", name: "Munich Airport", city: "Monaco di Baviera", country: "DE", lat: 48.3537, lon: 11.7750, is_base: false },
     FRA: { iata: "FRA", name: "Frankfurt Airport", city: "Francoforte", country: "DE", lat: 50.0379, lon: 8.5622, is_base: false },
-    BER: { iata: "BER", name: "Berlin Brandenburg", city: "Berlino", country: "DE", lat: 52.3667, lon: 13.5033, is_base: false },
-    VIE: { iata: "VIE", name: "Vienna International", city: "Vienna", country: "AT", lat: 48.1103, lon: 16.5697, is_base: false },
     DUB: { iata: "DUB", name: "Dublin Airport", city: "Dublino", country: "IE", lat: 53.4213, lon: -6.2701, is_base: false },
-    EDI: { iata: "EDI", name: "Edinburgh Airport", city: "Edimburgo", country: "GB", lat: 55.9508, lon: -3.3615, is_base: false },
     KRK: { iata: "KRK", name: "Krakow Balice", city: "Cracovia", country: "PL", lat: 50.0777, lon: 19.7848, is_base: false },
-    WAW: { iata: "WAW", name: "Warsaw Chopin", city: "Varsavia", country: "PL", lat: 52.1657, lon: 20.9671, is_base: false },
-    PRG: { iata: "PRG", name: "Prague Vaclav Havel", city: "Praga", country: "CZ", lat: 50.1008, lon: 14.2600, is_base: false },
-    AMS: { iata: "AMS", name: "Amsterdam Schiphol", city: "Amsterdam", country: "NL", lat: 52.3105, lon: 4.7683, is_base: false },
-    LIS: { iata: "LIS", name: "Lisbon Portela", city: "Lisbona", country: "PT", lat: 38.7742, lon: -9.1342, is_base: false },
-    OPO: { iata: "OPO", name: "Porto Airport", city: "Porto", country: "PT", lat: 41.2481, lon: -8.6814, is_base: false },
-    CPH: { iata: "CPH", name: "Copenhagen Kastrup", city: "Copenaghen", country: "DK", lat: 55.6180, lon: 12.6560, is_base: false },
-    ATH: { iata: "ATH", name: "Athens International", city: "Atene", country: "GR", lat: 37.9364, lon: 23.9445, is_base: false },
-    BUD: { iata: "BUD", name: "Budapest Ferenc Liszt", city: "Budapest", country: "HU", lat: 47.4298, lon: 19.2611, is_base: false },
-    IST: { iata: "IST", name: "Istanbul Airport", city: "Istanbul", country: "TR", lat: 41.2753, lon: 28.7519, is_base: false },
-    ZRH: { iata: "ZRH", name: "Zurich Airport", city: "Zurigo", country: "CH", lat: 47.4647, lon: 8.5492, is_base: false },
-    BRU: { iata: "BRU", name: "Brussels Airport", city: "Bruxelles", country: "BE", lat: 50.9010, lon: 4.4844, is_base: false },
-    OSL: { iata: "OSL", name: "Oslo Gardermoen", city: "Oslo", country: "NO", lat: 60.1976, lon: 11.1004, is_base: false },
-    HEL: { iata: "HEL", name: "Helsinki Vantaa", city: "Helsinki", country: "FI", lat: 60.3172, lon: 24.9633, is_base: false },
-    RAK: { iata: "RAK", name: "Marrakesh Menara", city: "Marrakech", country: "MA", lat: 31.6069, lon: -8.0363, is_base: false },
-    CTA: { iata: "CTA", name: "Catania Fontanarossa", city: "Catania", country: "IT", lat: 37.4668, lon: 15.0664, is_base: false }
+    AMS: { iata: "AMS", name: "Amsterdam Schiphol", city: "Amsterdam", country: "NL", lat: 52.3105, lon: 4.7683, is_base: false }
   };
-
   const pairs = [
     ["BLQ", "STN", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["06:40","14:15","21:05"] }]],
     ["BLQ", "LHR", [{ name: "British Airways", iata: "BA", days: [1,2,3,4,5,6,7], sample_times: ["11:50","18:45"] }]],
-    ["BLQ", "BCN", [
-      { name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["08:20","19:40"] },
-      { name: "Vueling", iata: "VY", days: [1,3,5,7], sample_times: ["13:15"] }
-    ]],
-    ["BLQ", "MAD", [
-      { name: "Iberia", iata: "IB", days: [1,2,3,4,5,6,7], sample_times: ["12:05","18:30"] },
-      { name: "Ryanair", iata: "FR", days: [1,2,4,5,6,7], sample_times: ["07:00"] }
-    ]],
     ["BLQ", "CDG", [{ name: "Air France", iata: "AF", days: [1,2,3,4,5,6,7], sample_times: ["06:50","12:25","17:40"] }]],
-    ["BLQ", "MUC", [{ name: "Air Dolomiti", iata: "EN", days: [1,2,3,4,5,6,7], sample_times: ["06:30","13:10","17:55"] }]],
-    ["BLQ", "FRA", [{ name: "Lufthansa", iata: "LH", days: [1,2,3,4,5,6,7], sample_times: ["06:45","10:50","18:20"] }]],
-    ["BLQ", "ARN", [{ name: "Ryanair", iata: "FR", days: [2,5,7], sample_times: ["15:20"] }]],
+    ["BLQ", "BVA", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["08:30","20:15"] }]],
+    ["BLQ", "BRU", [{ name: "Brussels Airlines", iata: "SN", days: [1,3,5,7], sample_times: ["13:15","17:45"] }]],
+    ["BLQ", "CRL", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["07:10","19:30"] }]],
     ["BLQ", "DUB", [{ name: "Ryanair", iata: "FR", days: [1,3,5,6,7], sample_times: ["11:05"] }]],
-    ["BLQ", "EDI", [{ name: "Ryanair", iata: "FR", days: [2,4,6], sample_times: ["16:10"] }]],
+    ["BLQ", "BCN", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["08:20","19:40"] }, { name: "Vueling", iata: "VY", days: [1,3,5,7], sample_times: ["13:15"] }]],
+    ["BLQ", "ARN", [{ name: "Ryanair", iata: "FR", days: [2,5,7], sample_times: ["15:20"] }]],
     ["BLQ", "KRK", [{ name: "Ryanair", iata: "FR", days: [1,3,5,7], sample_times: ["09:40"] }]],
-    ["BLQ", "WAW", [{ name: "Ryanair", iata: "FR", days: [2,4,6], sample_times: ["14:55"] }]],
-    ["BLQ", "VIE", [{ name: "Austrian Airlines", iata: "OS", days: [1,2,3,4,5,6,7], sample_times: ["10:25","19:15"] }]],
-    ["BLQ", "PMI", [{ name: "Ryanair", iata: "FR", days: [1,3,5,6,7], sample_times: ["07:35"] }]],
-    ["BLQ", "LIS", [{ name: "TAP Air Portugal", iata: "TP", days: [1,2,3,4,5,6,7], sample_times: ["11:40"] }]],
-    ["BLQ", "AMS", [{ name: "KLM", iata: "KL", days: [1,2,3,4,5,6,7], sample_times: ["06:20","12:10","17:30"] }]],
-    ["BLQ", "PRG", [{ name: "Ryanair", iata: "FR", days: [1,4,7], sample_times: ["10:15"] }]],
-    ["BLQ", "IST", [{ name: "Turkish Airlines", iata: "TK", days: [1,2,3,4,5,6,7], sample_times: ["11:10","18:45"] }]],
-    ["BLQ", "CTA", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["06:15","15:45"] }]],
-    ["BGY", "ARN", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["06:55","16:30"] }]],
-    ["BGY", "STN", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["07:10","13:20","20:40"] }]],
-    ["BGY", "DUB", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["09:50"] }]],
-    ["BGY", "KRK", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["08:30","18:10"] }]],
-    ["BGY", "OPO", [{ name: "Ryanair", iata: "FR", days: [1,3,5,7], sample_times: ["14:00"] }]],
-    ["BGY", "RAK", [{ name: "Ryanair", iata: "FR", days: [2,4,6,7], sample_times: ["11:25"] }]],
-    ["BGY", "BUD", [{ name: "Wizz Air", iata: "W6", days: [1,3,5,7], sample_times: ["17:50"] }]],
-    ["BGY", "OSL", [{ name: "Norwegian", iata: "DY", days: [2,4,7], sample_times: ["12:15"] }]],
-    ["VRN", "STN", [{ name: "Ryanair", iata: "FR", days: [1,3,5,6,7], sample_times: ["10:40"] }]],
-    ["VRN", "MUC", [{ name: "Air Dolomiti", iata: "EN", days: [1,2,3,4,5,6,7], sample_times: ["06:35","16:40"] }]],
-    ["VRN", "PMI", [{ name: "Volotea", iata: "V7", days: [2,5,7], sample_times: ["09:15"] }]],
-    ["VRN", "BCN", [{ name: "Volotea", iata: "V7", days: [1,4,6], sample_times: ["13:30"] }]],
-    ["FLR", "CDG", [{ name: "Air France", iata: "AF", days: [1,2,3,4,5,6,7], sample_times: ["07:05","14:30"] }]],
-    ["FLR", "FRA", [{ name: "Air Dolomiti", iata: "EN", days: [1,2,3,4,5,6,7], sample_times: ["06:50","18:00"] }]],
-    ["FLR", "AMS", [{ name: "KLM", iata: "KL", days: [1,2,3,4,5,6,7], sample_times: ["11:30"] }]],
-    ["FLR", "ZRH", [{ name: "SWISS", iata: "LX", days: [1,2,3,4,5,6,7], sample_times: ["09:45","17:20"] }]],
-    ["TSF", "BVA", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["08:15"] }]],
-    ["TSF", "KRK", [{ name: "Ryanair", iata: "FR", days: [2,4,6,7], sample_times: ["15:05"] }]],
-    ["TSF", "WAW", [{ name: "Ryanair", iata: "FR", days: [1,3,5], sample_times: ["12:20"] }]],
-    ["LIN", "LHR", [{ name: "British Airways", iata: "BA", days: [1,2,3,4,5,6,7], sample_times: ["08:00","15:10"] }]],
-    ["LIN", "CDG", [{ name: "ITA Airways", iata: "AZ", days: [1,2,3,4,5,6,7], sample_times: ["07:30","16:20"] }]],
-    ["LIN", "AMS", [{ name: "KLM", iata: "KL", days: [1,2,3,4,5,6,7], sample_times: ["06:40","17:45"] }]],
+    ["BGY", "CRL", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["06:55","18:20"] }]],
+    ["BGY", "BVA", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["07:45","19:10"] }]],
     ["LIN", "BRU", [{ name: "Brussels Airlines", iata: "SN", days: [1,2,3,4,5,7], sample_times: ["10:50"] }]],
-    ["MXP", "ARN", [{ name: "SAS", iata: "SK", days: [1,2,3,4,5,6,7], sample_times: ["11:25"] }]],
-    ["MXP", "CPH", [{ name: "SAS", iata: "SK", days: [1,2,3,4,5,6,7], sample_times: ["10:40"] }, { name: "easyJet", iata: "U2", days: [1,3,5,7], sample_times: ["14:20"] }]],
-    ["MXP", "HEL", [{ name: "Finnair", iata: "AY", days: [1,2,3,4,5,6,7], sample_times: ["11:15"] }]],
-    ["MXP", "BER", [{ name: "easyJet", iata: "U2", days: [1,2,3,4,5,6,7], sample_times: ["07:45","19:10"] }]],
-    ["MXP", "ATH", [{ name: "Aegean Airlines", iata: "A3", days: [1,2,3,4,5,6,7], sample_times: ["11:00"] }]],
-    ["VCE", "IST", [{ name: "Turkish Airlines", iata: "TK", days: [1,2,3,4,5,6,7], sample_times: ["10:15","19:30"] }]],
-    ["VCE", "VIE", [{ name: "Austrian Airlines", iata: "OS", days: [1,2,3,4,5,6,7], sample_times: ["09:55","18:40"] }]],
-    ["VCE", "EDI", [{ name: "easyJet", iata: "U2", days: [2,4,6], sample_times: ["14:50"] }]],
-    ["VCE", "DUB", [{ name: "Aer Lingus", iata: "EI", days: [1,3,5,6,7], sample_times: ["11:30"] }]]
+    ["LIN", "CDG", [{ name: "ITA Airways", iata: "AZ", days: [1,2,3,4,5,6,7], sample_times: ["07:30","16:20"] }]]
   ];
-
   const routes = [];
   for (const [a, b, airlines] of pairs) {
     routes.push({ from: a, to: b, airlines });
-    routes.push({
-      from: b,
-      to: a,
-      airlines: airlines.map(al => ({ ...al, sample_times: al.sample_times.map(t => shiftTime(t, 2)) }))
-    });
+    routes.push({ from: b, to: a, airlines: airlines.map(al => ({ ...al, sample_times: al.sample_times.map(t => shiftTime(t, 3)) })) });
   }
-
   return { is_demo: true, generated_at: null, quota_status: null, airports, routes };
 }
 
@@ -327,17 +429,71 @@ function shiftTime(hhmm, hours) {
   return `${String((h + hours) % 24).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
+// ==================== STATO & INDICI ====================
 let dataset = buildDemoDataset();
+let routesByPair = new Map();
+let cityGroups = new Map(); // "Bruxelles" -> ["BRU", "CRL"]
+
 let state = {
-  selectedAirport: "BLQ",
-  mode: "from",
+  selectedAirport: "BLQ",   // Codice IATA (es. "BLQ") oppure null se selezionato un gruppo citta
+  selectedCityGroup: null,  // Nome citta (es. "Bruxelles") oppure null
+  mode: "from",             // "from" | "to"
   airlineFilter: "",
   dayFilters: new Set(),
+  outMin: 0,                // minuti 0..1440
+  outMax: 1440,
+  retMin: 0,
+  retMax: 1440,
+  timesOpen: true,
   sortBy: "city",
   selectedRouteKey: null,
   darkTheme: true
 };
 
+function rebuildIndexes() {
+  routesByPair = new Map();
+  for (const r of dataset.routes) {
+    routesByPair.set(`${r.from}->${r.to}`, r);
+  }
+
+  // Costruisce gruppi "Citta - Tutti" per tutte le citta con >= 2 aeroporti presenti nel dataset
+  const groups = new Map();
+
+  // 1) Gruppi metropolitani noti (es. Milano -> LIN, MXP, BGY; Bruxelles -> BRU, CRL; Parigi -> CDG, ORY, BVA)
+  for (const [metroName, codes] of Object.entries(METRO_GROUPS)) {
+    const present = codes.filter(c => dataset.airports[c]);
+    if (present.length >= 2) {
+      groups.set(metroName, present);
+    }
+  }
+
+  // 2) Raggruppamento automatico per tutte le altre citta con piu aeroporti
+  const autoGroups = new Map();
+  for (const ap of Object.values(dataset.airports)) {
+    const raw = (ap.city || ap.name || ap.iata).replace(/\s*\([^)]*\)/g, "").split(",")[0].trim();
+    if (!raw) continue;
+    const norm = CITY_NAME_NORMALIZE[raw.toLowerCase()] || raw;
+    if (!autoGroups.has(norm)) autoGroups.set(norm, []);
+    autoGroups.get(norm).push(ap.iata);
+  }
+  for (const [cityName, codes] of autoGroups.entries()) {
+    const unique = [...new Set(codes)].sort();
+    if (unique.length >= 2 && !groups.has(cityName)) {
+      groups.set(cityName, unique);
+    }
+  }
+
+  cityGroups = groups;
+}
+
+function getSelectedCodes() {
+  if (state.selectedCityGroup && cityGroups.has(state.selectedCityGroup)) {
+    return cityGroups.get(state.selectedCityGroup);
+  }
+  return state.selectedAirport ? [state.selectedAirport] : [];
+}
+
+// ==================== MAPPA LEAFLET ====================
 const map = L.map("map", { center: [46.5, 11.2], zoom: 5, zoomControl: false, minZoom: 3, maxZoom: 12 });
 L.control.zoom({ position: "bottomleft" }).addTo(map);
 
@@ -351,6 +507,35 @@ tileDark.addTo(map);
 
 const routesLayer = L.layerGroup().addTo(map);
 const markersLayer = L.layerGroup().addTo(map);
+
+// ==================== HELPERS ORARI & GEOMETRIA ====================
+function formatMinutes(mins) {
+  if (mins >= 1440) return "23:59";
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function timeStrToMinutes(hhmm) {
+  if (!hhmm || typeof hhmm !== "string") return null;
+  const parts = hhmm.trim().split(":");
+  if (parts.length < 2) return null;
+  const h = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
+}
+
+function hasTimeInRange(timesArr, minM, maxM) {
+  if (!Array.isArray(timesArr) || !timesArr.length) return false;
+  const effectiveMax = maxM >= 1440 ? 1439 : maxM;
+  return timesArr.some(t => {
+    const mins = timeStrToMinutes(t);
+    return mins !== null && mins >= minM && mins <= effectiveMax;
+  });
+}
+
+function isOutTimeFiltered() { return state.outMin > 0 || state.outMax < 1440; }
+function isRetTimeFiltered() { return state.retMin > 0 || state.retMax < 1440; }
 
 function haversineKm(lat1, lon1, lat2, lon2) {
   const R = 6371, toRad = d => (d * Math.PI) / 180;
@@ -377,17 +562,47 @@ function buildCurvedArc(fromAp, toAp, steps = 36) {
   return pts;
 }
 
+// ==================== FILTRAGGIO ROTTE ====================
 function getMatchingRoutes() {
-  const ap = state.selectedAirport;
-  let list = dataset.routes.filter(r => state.mode === "from" ? r.from === ap : r.to === ap);
+  const selCodes = getSelectedCodes();
+  const selSet = new Set(selCodes);
+  const outFiltered = isOutTimeFiltered();
+  const retFiltered = isRetTimeFiltered();
+
+  let list = dataset.routes.filter(r =>
+    state.mode === "from"
+      ? (selSet.has(r.from) && !selSet.has(r.to))
+      : (selSet.has(r.to) && !selSet.has(r.from))
+  );
+
   list = list.map(r => {
     const filteredAirlines = r.airlines.filter(al => {
       if (state.airlineFilter && al.name !== state.airlineFilter) return false;
       if (state.dayFilters.size > 0 && !al.days.some(d => state.dayFilters.has(d))) return false;
+      if (outFiltered && !hasTimeInRange(al.sample_times, state.outMin, state.outMax)) return false;
       return true;
     });
-    return { ...r, airlines: filteredAirlines };
-  }).filter(r => r.airlines.length > 0);
+    if (!filteredAirlines.length) return null;
+
+    // Filtro orario ritorno: controlla la tratta inversa (r.to -> r.from)
+    let retMatchedTimes = null;
+    if (retFiltered) {
+      const rev = routesByPair.get(`${r.to}->${r.from}`);
+      if (!rev) return null;
+      const matchingRevAirlines = rev.airlines.filter(al => {
+        if (state.airlineFilter && al.name !== state.airlineFilter) return false;
+        return hasTimeInRange(al.sample_times, state.retMin, state.retMax);
+      });
+      if (!matchingRevAirlines.length) return null;
+      const tSet = new Set();
+      matchingRevAirlines.forEach(al => (al.sample_times || []).forEach(t => {
+        if (hasTimeInRange([t], state.retMin, state.retMax)) tSet.add(t);
+      }));
+      retMatchedTimes = [...tSet].sort();
+    }
+
+    return { ...r, airlines: filteredAirlines, _retMatchedTimes: retMatchedTimes };
+  }).filter(Boolean);
 
   list.forEach(r => {
     const allDays = new Set();
@@ -395,30 +610,40 @@ function getMatchingRoutes() {
     r._daysCount = allDays.size;
     r._allDays = [...allDays].sort((a, b) => a - b);
     const otherCode = state.mode === "from" ? r.to : r.from;
+    const hubCode = state.mode === "from" ? r.from : r.to;
     r._otherAp = dataset.airports[otherCode] || { iata: otherCode, city: otherCode, name: otherCode, country: "" };
+    r._hubAp = dataset.airports[hubCode] || { iata: hubCode, city: hubCode, name: hubCode, country: "" };
   });
 
-  if (state.sortBy === "city") list.sort((a, b) => a._otherAp.city.localeCompare(b._otherAp.city, "it"));
-  else if (state.sortBy === "freq") list.sort((a, b) => b._daysCount - a._daysCount || a._otherAp.city.localeCompare(b._otherAp.city, "it"));
-  else if (state.sortBy === "airlines") list.sort((a, b) => b.airlines.length - a.airlines.length || b._daysCount - a._daysCount);
+  if (state.sortBy === "city") {
+    list.sort((a, b) => a._otherAp.city.localeCompare(b._otherAp.city, "it") || a._hubAp.iata.localeCompare(b._hubAp.iata));
+  } else if (state.sortBy === "freq") {
+    list.sort((a, b) => b._daysCount - a._daysCount || a._otherAp.city.localeCompare(b._otherAp.city, "it"));
+  } else if (state.sortBy === "airlines") {
+    list.sort((a, b) => b.airlines.length - a.airlines.length || b._daysCount - a._daysCount);
+  }
   return list;
 }
 
-function getAvailableAirlinesForAirport() {
-  const ap = state.selectedAirport, set = new Set();
+function getAvailableAirlinesForSelection() {
+  const selSet = new Set(getSelectedCodes());
+  const set = new Set();
   dataset.routes.forEach(r => {
-    if ((state.mode === "from" && r.from === ap) || (state.mode === "to" && r.to === ap)) {
+    if ((state.mode === "from" && selSet.has(r.from) && !selSet.has(r.to)) ||
+        (state.mode === "to" && selSet.has(r.to) && !selSet.has(r.from))) {
       r.airlines.forEach(al => set.add(al.name));
     }
   });
   return [...set].sort((a, b) => a.localeCompare(b, "it"));
 }
 
+// ==================== RENDERING UI ====================
 function renderBasePills() {
   const container = document.getElementById("baseAirportPills");
   container.innerHTML = "";
+  const selSet = new Set(getSelectedCodes());
   BASE_ORDER.forEach(code => {
-    const active = state.selectedAirport === code;
+    const active = !state.selectedCityGroup ? (state.selectedAirport === code) : selSet.has(code);
     const btn = document.createElement("button");
     btn.className = `px-2 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 border ${
       active ? "bg-sky-600 text-white border-sky-400 shadow-md shadow-sky-900/40"
@@ -453,9 +678,33 @@ function renderDayFilters() {
   document.getElementById("resetDaysBtn").classList.toggle("hidden", state.dayFilters.size === 0);
 }
 
+function renderTimeSlidersUI() {
+  document.getElementById("outMinRange").value = state.outMin;
+  document.getElementById("outMaxRange").value = state.outMax;
+  document.getElementById("retMinRange").value = state.retMin;
+  document.getElementById("retMaxRange").value = state.retMax;
+
+  document.getElementById("outTimeLabel").textContent = `${formatMinutes(state.outMin)} - ${formatMinutes(state.outMax)}`;
+  document.getElementById("retTimeLabel").textContent = `${formatMinutes(state.retMin)} - ${formatMinutes(state.retMax)}`;
+
+  const outFill = document.getElementById("outSliderFill");
+  outFill.style.left = `${(state.outMin / 1440) * 100}%`;
+  outFill.style.width = `${((state.outMax - state.outMin) / 1440) * 100}%`;
+
+  const retFill = document.getElementById("retSliderFill");
+  retFill.style.left = `${(state.retMin / 1440) * 100}%`;
+  retFill.style.width = `${((state.retMax - state.retMin) / 1440) * 100}%`;
+
+  const anyTime = isOutTimeFiltered() || isRetTimeFiltered();
+  document.getElementById("timeActiveBadge").classList.toggle("hidden", !anyTime);
+  document.getElementById("resetTimesBtn").classList.toggle("hidden", !anyTime);
+  document.getElementById("timesAccordionBody").classList.toggle("hidden", !state.timesOpen);
+  document.getElementById("timesChevron").textContent = state.timesOpen ? "▲" : "▼";
+}
+
 function renderAirlineDropdown() {
   const sel = document.getElementById("airlineFilter");
-  const airlines = getAvailableAirlinesForAirport();
+  const airlines = getAvailableAirlinesForSelection();
   const prev = state.airlineFilter;
   sel.innerHTML = `<option value="">Tutte le compagnie (${airlines.length})</option>`;
   airlines.forEach(name => {
@@ -502,30 +751,56 @@ function renderQuotaStatus() {
 }
 
 function renderRoutesList(routes) {
-  const ap = dataset.airports[state.selectedAirport] || { iata: state.selectedAirport, city: state.selectedAirport };
-  document.getElementById("activeDirectionLabel").textContent = state.mode === "from" ? "Voli diretti in partenza da" : "Voli diretti in arrivo a";
-  document.getElementById("activeAirportTitle").textContent = `${ap.city} (${ap.iata})`;
+  const dirLabel = document.getElementById("activeDirectionLabel");
+  const titleEl = document.getElementById("activeAirportTitle");
+  const cityPillsEl = document.getElementById("activeCityPills");
+
+  dirLabel.textContent = state.mode === "from" ? "Voli diretti in partenza da" : "Voli diretti in arrivo a";
+
+  if (state.selectedCityGroup && cityGroups.has(state.selectedCityGroup)) {
+    const codes = cityGroups.get(state.selectedCityGroup);
+    titleEl.textContent = `${state.selectedCityGroup} - Tutti (${codes.length} aeroporti)`;
+    cityPillsEl.innerHTML = codes.map(c =>
+      `<button data-narrow="${c}" title="Filtra solo ${c}" class="px-1.5 py-0.5 rounded bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-200 border border-indigo-500/40 font-mono text-[10px] font-bold transition">${c}</button>`
+    ).join("");
+    cityPillsEl.querySelectorAll("button[data-narrow]").forEach(b => {
+      b.onclick = () => selectAirport(b.dataset.narrow, true);
+    });
+    cityPillsEl.classList.remove("hidden");
+  } else {
+    const ap = dataset.airports[state.selectedAirport] || { iata: state.selectedAirport, city: state.selectedAirport };
+    titleEl.textContent = `${ap.city} (${ap.iata})`;
+    cityPillsEl.classList.add("hidden");
+    cityPillsEl.innerHTML = "";
+  }
+
   document.getElementById("routeCountBadge").textContent = `${routes.length} ${routes.length === 1 ? "rotta" : "rotte"}`;
-  document.getElementById("resetFiltersBtn").classList.toggle("hidden", !(state.airlineFilter || state.dayFilters.size > 0));
+
+  const hasAnyFilter = Boolean(state.airlineFilter || state.dayFilters.size > 0 || isOutTimeFiltered() || isRetTimeFiltered());
+  document.getElementById("resetFiltersBtn").classList.toggle("hidden", !hasAnyFilter);
 
   const listEl = document.getElementById("routesList");
   if (!routes.length) {
-    listEl.innerHTML = `<div class="text-center py-10 px-4 text-slate-400"><div class="text-3xl mb-2">🛫</div><div class="text-sm font-semibold text-slate-200">Nessuna rotta trovata</div><div class="text-xs mt-1">Prova a rimuovere i filtri compagnia/giorni o cambia aeroporto.</div></div>`;
+    listEl.innerHTML = `<div class="text-center py-10 px-4 text-slate-400"><div class="text-3xl mb-2">🛫</div><div class="text-sm font-semibold text-slate-200">Nessuna rotta trovata</div><div class="text-xs mt-1">Prova ad allargare gli orari, rimuovere i filtri o cambiare aeroporto.</div></div>`;
     return;
   }
 
+  const isMultiCity = Boolean(state.selectedCityGroup);
   listEl.innerHTML = "";
   routes.forEach(r => {
     const key = `${r.from}->${r.to}`, selected = state.selectedRouteKey === key, other = r._otherAp;
     const card = document.createElement("button");
     card.className = `w-full text-left p-3 rounded-xl border transition ${selected ? "bg-sky-500/15 border-sky-500 shadow-md" : "bg-slate-800/45 border-slate-800 hover:bg-slate-800/90 hover:border-slate-700"}`;
     const dayDots = [1,2,3,4,5,6,7].map(d => `<span class="w-4 h-4 rounded text-[9px] font-bold flex items-center justify-center ${r._allDays.includes(d) ? "bg-emerald-500/25 text-emerald-300 border border-emerald-500/40" : "bg-slate-900 text-slate-600"}">${DAY_SHORT[d]}</span>`).join("");
+    const hubBadge = isMultiCity
+      ? `<span class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono text-[10px] font-bold shrink-0">${state.mode === "from" ? `da ${r.from}` : `su ${r.to}`}</span>`
+      : "";
     card.innerHTML = `
       <div class="flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2 min-w-0">
+        <div class="flex items-center gap-1.5 min-w-0">
           <span class="px-1.5 py-0.5 rounded bg-slate-950 font-mono text-xs font-bold ${other.is_base ? "text-amber-300" : "text-sky-300"}">${other.iata}</span>
           <span class="font-semibold text-sm text-white truncate">${other.city}</span>
-          ${other.country ? `<span class="text-[10px] text-slate-500">${other.country}</span>` : ""}
+          ${hubBadge}
         </div>
         <span class="text-[11px] font-semibold text-slate-400 shrink-0">${r._daysCount}/7 gg</span>
       </div>
@@ -541,8 +816,14 @@ function renderRoutesList(routes) {
 function renderMap(routes, fitBounds = false) {
   routesLayer.clearLayers();
   markersLayer.clearLayers();
-  const activeAp = dataset.airports[state.selectedAirport], boundsPoints = [];
-  if (activeAp && activeAp.lat != null) boundsPoints.push([activeAp.lat, activeAp.lon]);
+
+  const selCodes = getSelectedCodes();
+  const selSet = new Set(selCodes);
+  const boundsPoints = [];
+  selCodes.forEach(c => {
+    const ap = dataset.airports[c];
+    if (ap && ap.lat != null) boundsPoints.push([ap.lat, ap.lon]);
+  });
 
   routes.forEach(r => {
     const fromAp = dataset.airports[r.from], toAp = dataset.airports[r.to];
@@ -565,24 +846,24 @@ function renderMap(routes, fitBounds = false) {
 
   const connectedCodes = new Set();
   routes.forEach(r => connectedCodes.add(state.mode === "from" ? r.to : r.from));
-  const codesToRender = new Set([...BASE_ORDER, ...connectedCodes, state.selectedAirport]);
+  const codesToRender = new Set([...BASE_ORDER, ...connectedCodes, ...selCodes]);
 
   codesToRender.forEach(code => {
     const ap = dataset.airports[code];
     if (!ap || ap.lat == null) return;
-    const isSelected = code === state.selectedAirport;
+    const isSelected = selSet.has(code);
     const isBase = Boolean(ap.is_base || BASE_ORDER.includes(code));
     const isConnected = connectedCodes.has(code);
     const marker = L.circleMarker([ap.lat, ap.lon], {
       radius: isSelected ? 9 : (isBase ? 6.5 : 5.5),
       color: isSelected ? "#ffffff" : (isBase ? "#fbbf24" : "#38bdf8"),
       weight: isSelected ? 3 : 2,
-      fillColor: isSelected ? "#0284c7" : (isBase ? "#f59e0b" : (isConnected ? "#0ea5e9" : "#475569")),
+      fillColor: isSelected ? (state.selectedCityGroup ? "#6366f1" : "#0284c7") : (isBase ? "#f59e0b" : (isConnected ? "#0ea5e9" : "#475569")),
       fillOpacity: isSelected ? 1 : (isConnected || isBase ? 0.92 : 0.45)
     });
     marker.bindTooltip(`${ap.iata} • ${ap.city}`, { direction: "top", offset: [0, -8], className: "ap-tooltip" });
     marker.on("click", () => {
-      if (isSelected) return;
+      if (isSelected && !state.selectedCityGroup) return;
       if (isConnected) {
         const match = routes.find(r => (state.mode === "from" ? r.to === code : r.from === code));
         if (match) { selectRoute(match); return; }
@@ -601,7 +882,7 @@ function renderRouteDetail() {
   if (!state.selectedRouteKey) { card.classList.add("hidden"); return; }
   const [fromCode, toCode] = state.selectedRouteKey.split("->");
   const route = getMatchingRoutes().find(r => r.from === fromCode && r.to === toCode)
-    || dataset.routes.find(r => r.from === fromCode && r.to === toCode);
+    || routesByPair.get(state.selectedRouteKey);
   if (!route) { card.classList.add("hidden"); return; }
 
   const fromAp = dataset.airports[route.from] || { iata: route.from, city: route.from, name: route.from };
@@ -613,12 +894,18 @@ function renderRouteDetail() {
   document.getElementById("detailDistance").textContent = (fromAp.lat != null && toAp.lat != null)
     ? `• ${haversineKm(fromAp.lat, fromAp.lon, toAp.lat, toAp.lon).toLocaleString("it-IT")} km` : "";
 
+  const outFiltered = isOutTimeFiltered();
+  const retFiltered = isRetTimeFiltered();
   const list = document.getElementById("detailAirlinesList");
   list.innerHTML = "";
+
   route.airlines.forEach(al => {
     const badges = [1,2,3,4,5,6,7].map(d => `<span class="px-2 py-1 rounded-md text-[11px] font-bold text-center ${al.days.includes(d) ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-slate-950 text-slate-600 border border-slate-800/80"}">${DAY_LABEL[d]}</span>`).join("");
     const timesHtml = (al.sample_times && al.sample_times.length)
-      ? `<div class="flex flex-wrap gap-1.5 mt-2">${al.sample_times.map(t => `<span class="px-2 py-0.5 rounded bg-slate-950 border border-slate-700 text-[11px] font-mono text-slate-300">🕒 ${t}</span>`).join("")}</div>` : "";
+      ? `<div class="flex flex-wrap gap-1.5 mt-2">${al.sample_times.map(t => {
+          const inRange = !outFiltered || hasTimeInRange([t], state.outMin, state.outMax);
+          return `<span class="px-2 py-0.5 rounded border text-[11px] font-mono ${inRange ? "bg-slate-950 border-sky-500/50 text-sky-200" : "bg-slate-950/40 border-slate-800 text-slate-600 line-through"}">🕒 ${t}</span>`;
+        }).join("")}</div>` : "";
     const row = document.createElement("div");
     row.className = "p-3 rounded-xl bg-slate-800/60 border border-slate-700/70";
     row.innerHTML = `
@@ -633,12 +920,37 @@ function renderRouteDetail() {
       ${timesHtml}`;
     list.appendChild(row);
   });
+
+  // Riepilogo compatto degli orari di ritorno (se presente tratta inversa in cache)
+  const rev = routesByPair.get(`${route.to}->${route.from}`);
+  if (rev && rev.airlines && rev.airlines.length) {
+    const retAllTimes = new Set();
+    rev.airlines.forEach(al => {
+      if (!state.airlineFilter || al.name === state.airlineFilter) {
+        (al.sample_times || []).forEach(t => retAllTimes.add(t));
+      }
+    });
+    const sortedRet = [...retAllTimes].sort();
+    if (sortedRet.length) {
+      const retBox = document.createElement("div");
+      retBox.className = "p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30";
+      retBox.innerHTML = `
+        <div class="text-[11px] font-semibold text-emerald-300 mb-1.5">↩️ Orari ritorno (${route.to} → ${route.from})</div>
+        <div class="flex flex-wrap gap-1.5">${sortedRet.map(t => {
+          const ok = !retFiltered || hasTimeInRange([t], state.retMin, state.retMax);
+          return `<span class="px-2 py-0.5 rounded border text-[11px] font-mono ${ok ? "bg-slate-950 border-emerald-500/50 text-emerald-200" : "bg-slate-950/40 border-slate-800 text-slate-600 line-through"}">🕒 ${t}</span>`;
+        }).join("")}</div>`;
+      list.appendChild(retBox);
+    }
+  }
+
   card.classList.remove("hidden");
 }
 
 function renderAll(fitBounds = false) {
   renderBasePills();
   renderDayFilters();
+  renderTimeSlidersUI();
   renderAirlineDropdown();
   renderQuotaStatus();
   const routes = getMatchingRoutes();
@@ -647,9 +959,20 @@ function renderAll(fitBounds = false) {
   renderRouteDetail();
 }
 
+// ==================== AZIONI UTENTE ====================
 function selectAirport(code, fitBounds = true) {
   if (!dataset.airports[code]) return;
   state.selectedAirport = code;
+  state.selectedCityGroup = null;
+  state.selectedRouteKey = null;
+  state.airlineFilter = "";
+  renderAll(fitBounds);
+}
+
+function selectCityGroup(cityName, fitBounds = true) {
+  if (!cityGroups.has(cityName)) return;
+  state.selectedCityGroup = cityName;
+  state.selectedAirport = null;
   state.selectedRouteKey = null;
   state.airlineFilter = "";
   renderAll(fitBounds);
@@ -661,6 +984,7 @@ function selectRoute(route) {
   if (window.innerWidth < 768) document.getElementById("sidebar").classList.add("-translate-x-full");
 }
 
+// Mode buttons
 document.getElementById("modeFromBtn").onclick = () => {
   state.mode = "from"; state.selectedRouteKey = null;
   document.getElementById("modeFromBtn").className = "py-1.5 text-xs font-semibold rounded-lg transition bg-sky-600 text-white shadow";
@@ -673,17 +997,58 @@ document.getElementById("modeToBtn").onclick = () => {
   document.getElementById("modeFromBtn").className = "py-1.5 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white";
   renderAll(true);
 };
+
+// Sliders Orari Andata & Ritorno
+document.getElementById("toggleTimesAccordion").onclick = (e) => {
+  if (e.target.id === "resetTimesBtn") return;
+  state.timesOpen = !state.timesOpen;
+  renderTimeSlidersUI();
+};
+document.getElementById("resetTimesBtn").onclick = (e) => {
+  e.stopPropagation();
+  state.outMin = 0; state.outMax = 1440;
+  state.retMin = 0; state.retMax = 1440;
+  renderAll(false);
+};
+
+function wireDualSlider(minElId, maxElId, minKey, maxKey) {
+  const minEl = document.getElementById(minElId);
+  const maxEl = document.getElementById(maxElId);
+  minEl.addEventListener("input", () => {
+    let v = parseInt(minEl.value, 10);
+    if (v > state[maxKey] - 30) v = Math.max(0, state[maxKey] - 30);
+    state[minKey] = v;
+    renderAll(false);
+  });
+  maxEl.addEventListener("input", () => {
+    let v = parseInt(maxEl.value, 10);
+    if (v < state[minKey] + 30) v = Math.min(1440, state[minKey] + 30);
+    state[maxKey] = v;
+    renderAll(false);
+  });
+}
+wireDualSlider("outMinRange", "outMaxRange", "outMin", "outMax");
+wireDualSlider("retMinRange", "retMaxRange", "retMin", "retMax");
+
 document.getElementById("airlineFilter").onchange = e => { state.airlineFilter = e.target.value; state.selectedRouteKey = null; renderAll(false); };
 document.getElementById("sortSelect").onchange = e => { state.sortBy = e.target.value; renderAll(false); };
 document.getElementById("resetDaysBtn").onclick = () => { state.dayFilters.clear(); renderAll(false); };
-document.getElementById("resetFiltersBtn").onclick = () => { state.airlineFilter = ""; state.dayFilters.clear(); renderAll(false); };
+document.getElementById("resetFiltersBtn").onclick = () => {
+  state.airlineFilter = "";
+  state.dayFilters.clear();
+  state.outMin = 0; state.outMax = 1440;
+  state.retMin = 0; state.retMax = 1440;
+  renderAll(false);
+};
 document.getElementById("closeDetailBtn").onclick = () => { state.selectedRouteKey = null; renderAll(false); };
 document.getElementById("reverseRouteBtn").onclick = () => {
   if (!state.selectedRouteKey) return;
   const [fromCode, toCode] = state.selectedRouteKey.split("->");
-  const rev = dataset.routes.find(r => r.from === toCode && r.to === fromCode);
+  const rev = routesByPair.get(`${toCode}->${fromCode}`);
   if (rev) {
-    state.selectedAirport = toCode; state.mode = "from";
+    state.selectedAirport = toCode;
+    state.selectedCityGroup = null;
+    state.mode = "from";
     document.getElementById("modeFromBtn").className = "py-1.5 text-xs font-semibold rounded-lg transition bg-sky-600 text-white shadow";
     document.getElementById("modeToBtn").className = "py-1.5 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white";
     state.selectedRouteKey = `${toCode}->${fromCode}`;
@@ -699,54 +1064,112 @@ document.getElementById("themeToggleBtn").onclick = () => {
 document.getElementById("mobileMenuBtn").onclick = () => document.getElementById("sidebar").classList.remove("-translate-x-full");
 document.getElementById("closeMobileBtn").onclick = () => document.getElementById("sidebar").classList.add("-translate-x-full");
 
+// ==================== RICERCA CON "<CITTA> - TUTTI" ====================
 const searchInput = document.getElementById("airportSearch"), searchDropdown = document.getElementById("searchDropdown"), clearSearchBtn = document.getElementById("clearSearchBtn");
 searchInput.addEventListener("input", () => {
   const q = searchInput.value.trim().toLowerCase();
   clearSearchBtn.classList.toggle("hidden", !q);
   if (!q) { searchDropdown.classList.add("hidden"); return; }
+
+  // 1) Gruppi citta multi-aeroporto corrispondenti (es. "Bruxelles - Tutti")
+  const matchedGroups = [];
+  for (const [cityName, codes] of cityGroups.entries()) {
+    const nameMatch = cityName.toLowerCase().includes(q);
+    const apMatch = codes.some(c => {
+      const ap = dataset.airports[c];
+      return ap && (c.toLowerCase().includes(q) || (ap.city || "").toLowerCase().includes(q) || (ap.name || "").toLowerCase().includes(q));
+    });
+    if (nameMatch || apMatch) {
+      matchedGroups.push({ cityName, codes });
+    }
+  }
+  matchedGroups.sort((a, b) => a.cityName.localeCompare(b.cityName, "it"));
+
+  // 2) Singoli aeroporti corrispondenti
   const matches = Object.values(dataset.airports)
     .filter(ap => ap.iata.toLowerCase().includes(q) || (ap.city || "").toLowerCase().includes(q) || (ap.name || "").toLowerCase().includes(q))
-    .sort((a, b) => (b.is_base ? 1 : 0) - (a.is_base ? 1 : 0) || a.city.localeCompare(b.city, "it")).slice(0, 14);
-  searchDropdown.innerHTML = matches.length ? matches.map(ap => `
-    <button data-iata="${ap.iata}" class="w-full text-left px-3 py-2 hover:bg-slate-800 flex items-center justify-between gap-2 border-b border-slate-800/60 last:border-0">
-      <div class="text-xs font-semibold text-white truncate">${ap.city} <span class="text-slate-400 font-normal">• ${ap.name}</span></div>
-      <span class="font-mono text-xs font-bold px-1.5 py-0.5 rounded ${ap.is_base ? "bg-amber-500/20 text-amber-300" : "bg-sky-500/20 text-sky-300"}">${ap.iata}</span>
-    </button>`).join("") : `<div class="p-3 text-xs text-slate-400">Nessun aeroporto trovato</div>`;
-  searchDropdown.querySelectorAll("button[data-iata]").forEach(btn => {
-    btn.onclick = () => { selectAirport(btn.dataset.iata, true); searchInput.value = ""; clearSearchBtn.classList.add("hidden"); searchDropdown.classList.add("hidden"); };
-  });
+    .sort((a, b) => (b.is_base ? 1 : 0) - (a.is_base ? 1 : 0) || (a.city || "").localeCompare(b.city || "", "it"))
+    .slice(0, 14);
+
+  if (!matchedGroups.length && !matches.length) {
+    searchDropdown.innerHTML = `<div class="p-3 text-xs text-slate-400">Nessuna città o aeroporto trovato</div>`;
+  } else {
+    const groupsHtml = matchedGroups.slice(0, 4).map(g => `
+      <button data-citygroup="${g.cityName}" class="w-full text-left px-3 py-2.5 bg-indigo-500/10 hover:bg-indigo-500/25 flex items-center justify-between gap-2 border-b border-slate-700/80">
+        <div class="min-w-0">
+          <div class="text-xs font-bold text-indigo-200 truncate">🏙️ ${g.cityName} - Tutti</div>
+          <div class="text-[10px] text-slate-400 truncate">Tutti gli aeroporti: ${g.codes.join(", ")}</div>
+        </div>
+        <span class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 shrink-0">TUTTI (${g.codes.length})</span>
+      </button>`).join("");
+
+    const airportsHtml = matches.map(ap => `
+      <button data-iata="${ap.iata}" class="w-full text-left px-3 py-2 hover:bg-slate-800 flex items-center justify-between gap-2 border-b border-slate-800/60 last:border-0">
+        <div class="text-xs font-semibold text-white truncate">${ap.city} <span class="text-slate-400 font-normal">• ${ap.name}</span></div>
+        <span class="font-mono text-xs font-bold px-1.5 py-0.5 rounded ${ap.is_base ? "bg-amber-500/20 text-amber-300" : "bg-sky-500/20 text-sky-300"}">${ap.iata}</span>
+      </button>`).join("");
+
+    searchDropdown.innerHTML = groupsHtml + airportsHtml;
+
+    searchDropdown.querySelectorAll("button[data-citygroup]").forEach(btn => {
+      btn.onclick = () => {
+        selectCityGroup(btn.dataset.citygroup, true);
+        searchInput.value = "";
+        clearSearchBtn.classList.add("hidden");
+        searchDropdown.classList.add("hidden");
+      };
+    });
+    searchDropdown.querySelectorAll("button[data-iata]").forEach(btn => {
+      btn.onclick = () => {
+        selectAirport(btn.dataset.iata, true);
+        searchInput.value = "";
+        clearSearchBtn.classList.add("hidden");
+        searchDropdown.classList.add("hidden");
+      };
+    });
+  }
   searchDropdown.classList.remove("hidden");
 });
 clearSearchBtn.onclick = () => { searchInput.value = ""; clearSearchBtn.classList.add("hidden"); searchDropdown.classList.add("hidden"); };
 document.addEventListener("click", e => { if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) searchDropdown.classList.add("hidden"); });
 
+// ==================== MODALE QUOTA ====================
 document.getElementById("quotaInfoBtn").onclick = () => {
   const body = document.getElementById("quotaModalBody");
   if (dataset.is_demo) {
-    body.innerHTML = `<p>Stai visualizzando la <strong>Modalità DEMO</strong> perché non è ancora presente un file <code class="text-sky-300">routes.json</code> reale.</p><p class="text-xs text-slate-400">Appena GitHub Actions completerà la prima scansione AirLabs (o se trascini qui un file <code>routes.json</code>), la mappa passerà automaticamente ai dati reali.</p>`;
+    body.innerHTML = `<p>Stai visualizzando la <strong>Modalità DEMO</strong> perché non è ancora presente un file <code class="text-sky-300">routes.json</code> reale.</p>`;
   } else {
     const q = dataset.quota_status || {}, scans = q.last_scan_by_airport || {};
-    const rows = BASE_ORDER.map(code => {
-      const dt = scans[code] ? new Date(scans[code]).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "In attesa";
-      return `<div class="flex justify-between py-1 border-b border-slate-800 text-xs"><span class="font-mono font-bold text-amber-300">${code}</span><span class="text-slate-300">${dt}</span></div>`;
-    }).join("");
+    const fmt = (s) => s ? new Date(s).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "In attesa";
+    const rows = BASE_ORDER.map(code =>
+      `<div class="flex justify-between py-1 border-b border-slate-800 text-xs"><span class="font-mono font-bold text-amber-300">${code}</span><span class="text-slate-300">${fmt(scans[code])}</span></div>`
+    ).join("");
+    const ryanRow = `<div class="flex justify-between py-1.5 text-xs"><span class="font-bold text-sky-300">✈️ RYANAIR (tutta la flotta)</span><span class="text-slate-200 font-medium">${fmt(scans["RYANAIR"])}</span></div>`;
+
     body.innerHTML = `
       <div class="grid grid-cols-2 gap-2 text-xs">
-        <div class="p-3 rounded-xl bg-slate-950 border border-slate-800"><div class="text-slate-400">Chiamate usate (${q.cycle || "-"})</div><div class="text-lg font-bold text-white mt-0.5">${q.units_used ?? 0} / ${q.units_limit ?? "?"}</div></div>
-        <div class="p-3 rounded-xl bg-slate-950 border border-slate-800"><div class="text-slate-400">Stato Blocco</div><div class="text-lg font-bold mt-0.5 ${q.blocked ? "text-amber-400" : "text-emerald-400"}">${q.blocked ? "In pausa" : "Attivo"}</div></div>
+        <div class="p-3 rounded-xl bg-slate-950 border border-slate-800"><div class="text-slate-400">Chiamate AirLabs (${q.cycle || "-"})</div><div class="text-lg font-bold text-white mt-0.5">${q.units_used ?? 0} / ${q.units_limit ?? "?"}</div></div>
+        <div class="p-3 rounded-xl bg-slate-950 border border-slate-800"><div class="text-slate-400">Rotte in cache</div><div class="text-lg font-bold text-sky-400 mt-0.5">${dataset.routes.length.toLocaleString("it-IT")}</div></div>
       </div>
       ${q.blocked && q.reason ? `<div class="p-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs">${q.reason}</div>` : ""}
-      <div><div class="text-xs font-semibold text-slate-400 uppercase mb-1">Ultima scansione per aeroporto</div><div class="bg-slate-950 rounded-xl border border-slate-800 px-3 py-1">${rows}</div></div>`;
+      <div>
+        <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Ultima scansione</div>
+        <div class="bg-slate-950 rounded-xl border border-slate-800 px-3 py-1">${rows}${ryanRow}</div>
+      </div>`;
   }
   document.getElementById("quotaModal").classList.remove("hidden");
 };
 document.getElementById("closeQuotaModal").onclick = () => document.getElementById("quotaModal").classList.add("hidden");
 document.getElementById("quotaModal").onclick = e => { if (e.target.id === "quotaModal") document.getElementById("quotaModal").classList.add("hidden"); };
 
+// ==================== CARICAMENTO JSON ====================
 function applyLoadedJson(data) {
   if (!data || !data.airports || !Array.isArray(data.routes)) { alert("Il file JSON non sembra avere il formato valido di FlightMap."); return; }
   dataset = { ...data, is_demo: false };
-  if (!dataset.airports[state.selectedAirport]) state.selectedAirport = BASE_ORDER.find(c => dataset.airports[c]) || Object.keys(dataset.airports)[0];
+  rebuildIndexes();
+  if (!state.selectedCityGroup && (!state.selectedAirport || !dataset.airports[state.selectedAirport])) {
+    state.selectedAirport = BASE_ORDER.find(c => dataset.airports[c]) || Object.keys(dataset.airports)[0];
+  }
   state.selectedRouteKey = null;
   renderAll(true);
 }
@@ -758,6 +1181,7 @@ async function tryAutoLoadJson() {
     const json = await resp.json();
     if (json && json.routes && json.routes.length > 0) { applyLoadedJson(json); return; }
   } catch (_) {}
+  rebuildIndexes();
   renderAll(true);
 }
 

@@ -3,13 +3,15 @@ import csv
 import io
 import json
 import os
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import requests
 
 # ================= CONFIGURAZIONE =================
-SCANNER_VERSION = "v5-ryanair-direct+airlabs"
+SCANNER_VERSION = "v6-ryanair-global+airlabs"
 AIRLABS_KEY = os.getenv("AIRLABS_KEY", "INCOLLA_QUI_LA_TUA_API_KEY")
 AIRLABS_BASE = "https://airlabs.co/api/v9"
 ITALY_TZ = ZoneInfo("Europe/Rome")
@@ -24,29 +26,33 @@ RYANAIR_HEADERS = {
     "Accept-Language": "it-IT,it;q=0.9,en;q=0.8",
 }
 
-# Limite mensile prudenziale di sicurezza (si aggiorna automaticamente col residuo reale di AirLabs)
+# Limite mensile prudenziale di sicurezza AirLabs
 MAX_MONTHLY_CALLS = 950
-MIN_RESERVE_CALLS = 15  # Blocca le chiamate se AirLabs segnala <= 15 richieste residue nel mese
+MIN_RESERVE_CALLS = 15
 MAX_PAGES_PER_DIRECTION = 40
 
 # Giorno del mese in cui si azzera il contatore mensile AirLabs (1-28)
 BILLING_RESET_DAY = 1
 
-# Frequenza automatica (modalita AUTO): Bologna ogni 7 giorni, gli altri 7 ogni 30 giorni
+# Frequenza automatica (modalita AUTO):
+# - Flotta intera Ryanair (tutti gli aeroporti): ogni 7 giorni (0 token AirLabs!)
+# - Bologna (altre compagnie AirLabs): ogni 7 giorni
+# - Altri 7 aeroporti italiani (altre compagnie AirLabs): ogni 30 giorni
+RYANAIR_GLOBAL_INTERVAL_DAYS = 7
+
 AIRPORT_SCHEDULE = {
-    "BLQ": 7,   # Bologna: ogni 7 giorni
-    "VRN": 30,  # Verona: ogni 30 giorni
-    "BGY": 30,  # Bergamo: ogni 30 giorni
-    "FLR": 30,  # Firenze: ogni 30 giorni
-    "TSF": 30,  # Treviso: ogni 30 giorni
-    "LIN": 30,  # Milano Linate: ogni 30 giorni
-    "MXP": 30,  # Milano Malpensa: ogni 30 giorni
-    "VCE": 30,  # Venezia: ogni 30 giorni
+    "BLQ": 7,
+    "VRN": 30,
+    "BGY": 30,
+    "FLR": 30,
+    "TSF": 30,
+    "LIN": 30,
+    "MXP": 30,
+    "VCE": 30,
 }
 
 RYANAIR_CODES = {"FR", "MW", "RK", "LW", "RR"}
 
-# Compagnie principali per ciascun aeroporto (usate come fallback se AirLabs blocca offset)
 AIRPORT_AIRLINES = {
     "BLQ": [
         "FR", "MW", "RK", "LW", "RR",
@@ -123,89 +129,31 @@ BASE_AIRPORTS = {
 }
 
 CITY_OVERRIDES = {
-    "CDG": "Parigi (Charles de Gaulle)",
-    "ORY": "Parigi (Orly)",
-    "BVA": "Parigi (Beauvais)",
-    "LHR": "Londra (Heathrow)",
-    "STN": "Londra (Stansted)",
-    "LTN": "Londra (Luton)",
-    "LGW": "Londra (Gatwick)",
-    "BRU": "Bruxelles (Zaventem)",
-    "CRL": "Bruxelles (Charleroi)",
-    "ARN": "Stoccolma (Arlanda)",
-    "NYO": "Stoccolma (Skavsta)",
-    "WAW": "Varsavia (Chopin)",
-    "WMI": "Varsavia (Modlin)",
-    "FRA": "Francoforte",
-    "HHN": "Francoforte (Hahn)",
-    "MUC": "Monaco di Baviera",
-    "FMM": "Monaco (Memmingen)",
-    "NRN": "Düsseldorf (Weeze)",
-    "DUB": "Dublino",
-    "EDI": "Edimburgo",
-    "KRK": "Cracovia",
-    "PRG": "Praga",
-    "VIE": "Vienna",
-    "LIS": "Lisbona",
-    "ATH": "Atene",
-    "BCN": "Barcellona",
-    "BER": "Berlino",
-    "ZRH": "Zurigo",
-    "CPH": "Copenaghen",
-    "OTP": "Bucarest (Otopeni)",
-    "BBU": "Bucarest (Băneasa)",
-    "MLA": "Malta",
-    "FCO": "Roma (Fiumicino)",
-    "CIA": "Roma (Ciampino)",
-    "NAP": "Napoli",
-    "PMO": "Palermo",
-    "CTA": "Catania",
-    "CAG": "Cagliari",
-    "BRI": "Bari",
-    "BDS": "Brindisi",
-    "AHO": "Alghero",
-    "OLB": "Olbia",
-    "SUF": "Lamezia Terme",
-    "TPS": "Trapani",
-    "IST": "Istanbul",
-    "SAW": "Istanbul (Sabiha Gökçen)",
-    "PMI": "Palma di Maiorca",
-    "SVQ": "Siviglia",
-    "VLC": "Valencia",
-    "AGP": "Malaga",
-    "ALC": "Alicante",
-    "ACE": "Lanzarote",
-    "TFS": "Tenerife Sud",
-    "FUE": "Fuerteventura",
-    "LPA": "Gran Canaria",
-    "CGN": "Colonia",
-    "DUS": "Düsseldorf",
-    "MRS": "Marsiglia",
-    "TLS": "Tolosa",
-    "LYS": "Lione",
-    "NCE": "Nizza",
-    "BOD": "Bordeaux",
-    "BEG": "Belgrado",
-    "TIA": "Tirana",
-    "WRO": "Breslavia",
-    "GDN": "Danzica",
-    "POZ": "Poznań",
-    "KTW": "Katowice",
-    "ZAD": "Zara",
-    "SPU": "Spalato",
-    "DBV": "Dubrovnik",
-    "ZAG": "Zagabria",
-    "SKG": "Salonicco",
-    "RHO": "Rodi",
-    "CFU": "Corfù",
-    "HER": "Heraklion (Creta)",
-    "CHQ": "Chania (Creta)",
-    "JTR": "Santorini",
-    "RAK": "Marrakech",
-    "FEZ": "Fès",
-    "TNG": "Tangeri",
-    "CMN": "Casablanca",
-    "TUN": "Tunisi",
+    "CDG": "Parigi (Charles de Gaulle)", "ORY": "Parigi (Orly)", "BVA": "Parigi (Beauvais)",
+    "LHR": "Londra (Heathrow)", "STN": "Londra (Stansted)", "LTN": "Londra (Luton)", "LGW": "Londra (Gatwick)", "LCY": "Londra (City)", "SEN": "Londra (Southend)",
+    "BRU": "Bruxelles (Zaventem)", "CRL": "Bruxelles (Charleroi)",
+    "ARN": "Stoccolma (Arlanda)", "NYO": "Stoccolma (Skavsta)", "VST": "Stoccolma (Västerås)",
+    "WAW": "Varsavia (Chopin)", "WMI": "Varsavia (Modlin)",
+    "FRA": "Francoforte", "HHN": "Francoforte (Hahn)",
+    "MUC": "Monaco di Baviera", "FMM": "Monaco (Memmingen)",
+    "DUS": "Düsseldorf", "NRN": "Düsseldorf (Weeze)",
+    "OSL": "Oslo (Gardermoen)", "TRF": "Oslo (Torp)",
+    "DUB": "Dublino", "EDI": "Edimburgo", "GLA": "Glasgow", "PIK": "Glasgow (Prestwick)",
+    "KRK": "Cracovia", "PRG": "Praga", "VIE": "Vienna", "LIS": "Lisbona", "OPO": "Porto",
+    "ATH": "Atene", "BCN": "Barcellona", "GRO": "Barcellona (Girona)", "REU": "Barcellona (Reus)",
+    "BER": "Berlino", "ZRH": "Zurigo", "CPH": "Copenaghen",
+    "OTP": "Bucarest (Otopeni)", "BBU": "Bucarest (Băneasa)", "MLA": "Malta",
+    "FCO": "Roma (Fiumicino)", "CIA": "Roma (Ciampino)", "NAP": "Napoli",
+    "PMO": "Palermo", "CTA": "Catania", "CAG": "Cagliari", "BRI": "Bari", "BDS": "Brindisi",
+    "AHO": "Alghero", "OLB": "Olbia", "SUF": "Lamezia Terme", "TPS": "Trapani",
+    "IST": "Istanbul", "SAW": "Istanbul (Sabiha Gökçen)",
+    "PMI": "Palma di Maiorca", "SVQ": "Siviglia", "VLC": "Valencia", "AGP": "Malaga", "ALC": "Alicante",
+    "ACE": "Lanzarote", "TFS": "Tenerife Sud", "TFN": "Tenerife Nord", "FUE": "Fuerteventura", "LPA": "Gran Canaria",
+    "CGN": "Colonia", "MRS": "Marsiglia", "TLS": "Tolosa", "LYS": "Lione", "NCE": "Nizza", "BOD": "Bordeaux",
+    "BEG": "Belgrado", "TIA": "Tirana", "WRO": "Breslavia", "GDN": "Danzica", "POZ": "Poznań", "KTW": "Katowice",
+    "ZAD": "Zara", "SPU": "Spalato", "DBV": "Dubrovnik", "ZAG": "Zagabria",
+    "SKG": "Salonicco", "RHO": "Rodi", "CFU": "Corfù", "HER": "Heraklion (Creta)", "CHQ": "Chania (Creta)", "JTR": "Santorini",
+    "RAK": "Marrakech", "FEZ": "Fès", "TNG": "Tangeri", "CMN": "Casablanca", "TUN": "Tunisi",
 }
 
 DEFAULT_AIRLINES = {
@@ -269,9 +217,12 @@ def load_json(path: str, default: dict) -> dict:
     return default
 
 
-def save_json(path: str, data: dict) -> None:
+def save_json(path: str, data: dict, compact: bool = False) -> None:
     with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+        if compact:
+            json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
+        else:
+            json.dump(data, f, ensure_ascii=False, indent=2)
 
 
 def load_state(now: datetime) -> dict:
@@ -295,10 +246,21 @@ def load_state(now: datetime) -> dict:
         state["blocked_reason"] = None
     state.setdefault("units_limit", MAX_MONTHLY_CALLS)
     state.setdefault("remote_remaining", None)
-
     cached = {k: v for k, v in state.get("airlines_cache", {}).items() if v and v != k}
     state["airlines_cache"] = {**cached, **DEFAULT_AIRLINES}
     return state
+
+
+def days_since(iso_str: str, now: datetime) -> int:
+    if not iso_str:
+        return 9999
+    try:
+        dt = datetime.fromisoformat(iso_str)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=ITALY_TZ)
+        return (now - dt).days
+    except ValueError:
+        return 9999
 
 
 def airlabs_get(endpoint: str, params: dict, state: dict):
@@ -372,33 +334,53 @@ def airlabs_get(endpoint: str, params: dict, state: dict):
 
 
 # ==================== RYANAIR PUBLIC API (0 TOKEN AIRLABS) ====================
-def ryanair_get_json(urls: list, session: requests.Session):
+_thread_local = threading.local()
+
+
+def get_thread_session() -> requests.Session:
+    if not hasattr(_thread_local, "session"):
+        s = requests.Session()
+        s.headers.update(RYANAIR_HEADERS)
+        _thread_local.session = s
+    return _thread_local.session
+
+
+def ryanair_get_json(urls: list, session: requests.Session = None):
+    sess = session or get_thread_session()
     for url in urls:
         try:
-            resp = session.get(url, headers=RYANAIR_HEADERS, timeout=20)
+            resp = sess.get(url, timeout=20)
             if resp.status_code == 200:
-                return resp.json()
+                return resp.json(), 200
+            if resp.status_code in (429, 403):
+                return None, resp.status_code
         except requests.RequestException:
             continue
-    return None
+    return None, 0
 
 
-def fetch_ryanair_schedule(orig: str, dest: str, now: datetime, session: requests.Session):
-    """Recupera giorni della settimana (1..7) e orari di partenza da Ryanair per una singola tratta."""
+def target_months_for_schedule(now: datetime, full_two_months: bool = True) -> list:
+    next_m = (now.year + 1, 1) if now.month == 12 else (now.year, now.month + 1)
+    if full_two_months:
+        return [(now.year, now.month), next_m]
+    # Per scansione globale: 1 mese completo (il mese prossimo se siamo oltre il 10, altrimenti il mese corrente)
+    return [next_m] if now.day > 10 else [(now.year, now.month)]
+
+
+def fetch_ryanair_schedule(orig: str, dest: str, now: datetime, session: requests.Session = None, full_two_months: bool = True):
+    """Recupera giorni della settimana (1..7) e TUTTI gli orari di partenza da Ryanair per una tratta."""
     days_set = set()
     times_set = set()
+    rate_limited = False
 
-    # Controlla mese corrente e mese successivo cosi copre sempre le prossime 4+ settimane
-    months_to_check = [
-        (now.year, now.month),
-        (now.year + 1, 1) if now.month == 12 else (now.year, now.month + 1),
-    ]
-
-    for y, m in months_to_check:
-        data = ryanair_get_json([
+    for y, m in target_months_for_schedule(now, full_two_months=full_two_months):
+        data, code = ryanair_get_json([
             f"https://www.ryanair.com/api/timtbl/3/schedules/{orig}/{dest}/years/{y}/months/{m}",
             f"https://services-api.ryanair.com/timtbl/3/schedules/{orig}/{dest}/years/{y}/months/{m}",
         ], session)
+        if code in (429, 403):
+            rate_limited = True
+            break
         if isinstance(data, dict) and isinstance(data.get("days"), list):
             for d_obj in data["days"]:
                 day_num = d_obj.get("day")
@@ -412,16 +394,18 @@ def fetch_ryanair_schedule(orig: str, dest: str, now: datetime, session: request
                     continue
                 for fl in flights:
                     t = (fl.get("departureTime") or "")[:5]
-                    if t and len(times_set) < 5:
+                    if t and len(times_set) < 24:
                         times_set.add(t)
 
-    # Fallback leggero: availabilities (lista di date YYYY-MM-DD)
-    if not days_set:
-        avail = ryanair_get_json([
+    # Fallback availabilities solo se non siamo rate-limited e non abbiamo ancora trovato giorni
+    if not days_set and not rate_limited and full_two_months:
+        avail, code = ryanair_get_json([
             f"https://www.ryanair.com/api/farfnd/3/oneWayFares/{orig}/{dest}/availabilities",
             f"https://services-api.ryanair.com/farfnd/3/oneWayFares/{orig}/{dest}/availabilities",
         ], session)
-        if isinstance(avail, list):
+        if code in (429, 403):
+            rate_limited = True
+        elif isinstance(avail, list):
             horizon = now.date() + timedelta(days=45)
             today = now.date()
             for ds in avail:
@@ -432,68 +416,66 @@ def fetch_ryanair_schedule(orig: str, dest: str, now: datetime, session: request
                 except ValueError:
                     continue
 
-    return days_set, times_set
+    return days_set, times_set, rate_limited
+
+
+def upsert_ryanair_airport(ap_obj: dict, airports_db: dict):
+    code = (ap_obj.get("code") or "").strip().upper()
+    if not code or code in BASE_AIRPORTS:
+        return code
+    coords = ap_obj.get("coordinates") or {}
+    lat = coords.get("latitude")
+    lon = coords.get("longitude")
+    if lat is not None and lon is not None:
+        city_obj = ap_obj.get("city") or {}
+        country_obj = ap_obj.get("country") or {}
+        ap_name = (ap_obj.get("name") or code).strip()
+        ap_city = CITY_OVERRIDES.get(code) or (city_obj.get("name") or ap_name).strip()
+        airports_db[code] = {
+            "iata": code,
+            "name": ap_name,
+            "city": ap_city,
+            "country": (country_obj.get("code") or "").strip().upper(),
+            "lat": float(lat),
+            "lon": float(lon),
+            "is_base": False,
+        }
+    return code
 
 
 def fetch_ryanair_routes_for_airport(iata: str, now: datetime, temp_routes: dict, airports_db: dict, discovered_airports: set) -> bool:
-    """Scarica TUTTE le rotte dirette Ryanair da/per l'aeroporto direttamente dall'API pubblica Ryanair (0 token AirLabs)."""
-    session = requests.Session()
-    data = ryanair_get_json([
+    """Scarica tutte le rotte dirette Ryanair per 1 singolo aeroporto base (0 token AirLabs)."""
+    session = get_thread_session()
+    data, _ = ryanair_get_json([
         f"https://www.ryanair.com/api/views/locate/searchWidget/routes/it/airport/{iata}",
         f"https://services-api.ryanair.com/views/locate/searchWidget/routes/it/airport/{iata}",
         f"https://www.ryanair.com/api/views/locate/searchWidget/routes/en/airport/{iata}",
     ], session)
 
     if not isinstance(data, list) or not data:
-        print(f"  [RYANAIR] Nessuna rotta o API pubblica non raggiungibile per {iata} (userò AirLabs).")
+        print(f"  [RYANAIR] Nessuna rotta o API pubblica non raggiungibile per {iata}.")
         return False
 
     direct_dests = []
     for item in data:
-        if not isinstance(item, dict):
-            continue
-        # Esclude eventuali voli in connessione con scalo
-        if item.get("connectingAirport"):
+        if not isinstance(item, dict) or item.get("connectingAirport"):
             continue
         arr = item.get("arrivalAirport") or {}
-        dest = (arr.get("code") or "").strip().upper()
+        dest = upsert_ryanair_airport(arr, airports_db)
         if not dest or dest == iata:
             continue
-
         direct_dests.append(dest)
         discovered_airports.add(dest)
 
-        # Salva subito anche coordinate e nomi se presenti nella risposta Ryanair
-        coords = arr.get("coordinates") or {}
-        lat = coords.get("latitude")
-        lon = coords.get("longitude")
-        if dest not in BASE_AIRPORTS and lat is not None and lon is not None:
-            city_obj = arr.get("city") or {}
-            country_obj = arr.get("country") or {}
-            ap_name = (arr.get("name") or dest).strip()
-            ap_city = CITY_OVERRIDES.get(dest) or (city_obj.get("name") or ap_name).strip()
-            airports_db[dest] = {
-                "iata": dest,
-                "name": ap_name,
-                "city": ap_city,
-                "country": (country_obj.get("code") or "").strip().upper(),
-                "lat": float(lat),
-                "lon": float(lon),
-                "is_base": False,
-            }
-
     direct_dests = sorted(set(direct_dests))
     if not direct_dests:
-        print(f"  [RYANAIR] 0 destinazioni dirette Ryanair per {iata}.")
         return False
 
-    print(f"  [RYANAIR] Trovate {len(direct_dests)} destinazioni dirette reali per {iata} (0 token AirLabs). Scarico giorni e orari...")
-
+    print(f"  [RYANAIR] Trovate {len(direct_dests)} destinazioni dirette per {iata} (0 token AirLabs). Scarico orari...")
     added_out = 0
     added_in = 0
     for dest in direct_dests:
-        # Andata: iata -> dest
-        out_days, out_times = fetch_ryanair_schedule(iata, dest, now, session)
+        out_days, out_times, _ = fetch_ryanair_schedule(iata, dest, now, session, full_two_months=True)
         if out_days:
             entry = temp_routes.setdefault((iata, dest), {}).setdefault(
                 "Ryanair",
@@ -503,8 +485,7 @@ def fetch_ryanair_routes_for_airport(iata: str, now: datetime, temp_routes: dict
             entry["sample_times"].update(out_times)
             added_out += 1
 
-        # Ritorno: dest -> iata
-        in_days, in_times = fetch_ryanair_schedule(dest, iata, now, session)
+        in_days, in_times, _ = fetch_ryanair_schedule(dest, iata, now, session, full_two_months=True)
         if in_days:
             entry = temp_routes.setdefault((dest, iata), {}).setdefault(
                 "Ryanair",
@@ -514,10 +495,150 @@ def fetch_ryanair_routes_for_airport(iata: str, now: datetime, temp_routes: dict
             entry["sample_times"].update(in_times)
             added_in += 1
 
-        time.sleep(0.05)
+        time.sleep(0.04)
 
-    print(f"  [RYANAIR OK] {iata}: caricate {added_out} tratte in partenza e {added_in} in arrivo con giorni/orari reali (BVA={'BVA' in direct_dests}, DUB={'DUB' in direct_dests}).")
+    print(f"  [RYANAIR OK] {iata}: caricate {added_out} tratte in partenza e {added_in} in arrivo.")
     return added_out > 0
+
+
+def sync_global_ryanair_fleet(now: datetime, routes_index: dict, airports_db: dict, discovered_airports: set) -> bool:
+    """Sincronizza TUTTA la flotta Ryanair su tutti gli aeroporti europei/mediterranei (0 token AirLabs!)."""
+    t0 = time.time()
+    print("[RYANAIR GLOBAL] Avvio scansione completa flotta Ryanair (0 token AirLabs)...")
+
+    # 1) Scarica lista completa di tutti gli aeroporti attivi Ryanair (~235 aeroporti in 1 chiamata)
+    active_airports, code = ryanair_get_json([
+        "https://www.ryanair.com/api/views/locate/5/airports/it/active",
+        "https://services-api.ryanair.com/views/locate/5/airports/it/active",
+        "https://www.ryanair.com/api/views/locate/5/airports/en/active",
+        "https://www.ryanair.com/api/views/locate/3/airports/it/active",
+    ])
+
+    if not isinstance(active_airports, list) or not active_airports:
+        print(f"[RYANAIR GLOBAL] Impossibile scaricare l'elenco aeroporti attivi (HTTP {code}).")
+        return False
+
+    ryanair_iata_list = []
+    for ap in active_airports:
+        if not isinstance(ap, dict):
+            continue
+        c = upsert_ryanair_airport(ap, airports_db)
+        if c:
+            ryanair_iata_list.append(c)
+            discovered_airports.add(c)
+
+    ryanair_iata_list = sorted(set(ryanair_iata_list))
+    print(f"[RYANAIR GLOBAL] Trovati {len(ryanair_iata_list)} aeroporti attivi Ryanair. Scarico la rete delle rotte...")
+
+    # 2) Scarica le rotte dirette per ciascuno dei ~235 aeroporti in parallelo
+    directed_pairs = set()
+
+    def fetch_ap_routes(orig_code):
+        sess = get_thread_session()
+        rows, _ = ryanair_get_json([
+            f"https://www.ryanair.com/api/views/locate/searchWidget/routes/it/airport/{orig_code}",
+            f"https://services-api.ryanair.com/views/locate/searchWidget/routes/it/airport/{orig_code}",
+        ], sess)
+        found = []
+        if isinstance(rows, list):
+            for item in rows:
+                if not isinstance(item, dict) or item.get("connectingAirport"):
+                    continue
+                arr = item.get("arrivalAirport") or {}
+                dest = (arr.get("code") or "").strip().upper()
+                if dest and dest != orig_code:
+                    found.append((orig_code, dest, arr))
+        return found
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        futures = [pool.submit(fetch_ap_routes, c) for c in ryanair_iata_list]
+        for fut in as_completed(futures):
+            try:
+                for orig, dest, arr_obj in fut.result():
+                    directed_pairs.add((orig, dest))
+                    discovered_airports.add(dest)
+                    if dest not in airports_db:
+                        upsert_ryanair_airport(arr_obj, airports_db)
+            except Exception:
+                continue
+
+    # Prioritizza le tratte che toccano i tuoi 8 aeroporti base cosi vengono sempre completate per prime
+    ordered_pairs = sorted(
+        directed_pairs,
+        key=lambda p: (0 if (p[0] in BASE_AIRPORTS or p[1] in BASE_AIRPORTS) else 1, p[0], p[1])
+    )
+    print(f"[RYANAIR GLOBAL] Scoperte {len(ordered_pairs)} tratte dirette totali in {time.time() - t0:.1f}s. Scarico giorni e orari...")
+
+    # 3) Scarica giorni e orari con parallelismo moderato e protezione anti-timeout/rate-limit
+    fresh_ryanair = {}  # (orig, dest) -> {"name": "Ryanair", "iata": "FR", "days": [...], "sample_times": [...]}
+    stop_event = threading.Event()
+    rate_limit_hits = 0
+    rl_lock = threading.Lock()
+    max_seconds = 1100  # Budget massimo ~18 minuti (ampiamente entro i limiti GitHub Actions)
+
+    def fetch_pair_sched(pair):
+        nonlocal rate_limit_hits
+        if stop_event.is_set() or (time.time() - t0) > max_seconds:
+            return pair, None, None, False
+        orig, dest = pair
+        is_base_pair = (orig in BASE_AIRPORTS or dest in BASE_AIRPORTS)
+        days_s, times_s, rl = fetch_ryanair_schedule(orig, dest, now, full_two_months=is_base_pair)
+        if rl:
+            with rl_lock:
+                rate_limit_hits += 1
+                if rate_limit_hits >= 15:
+                    stop_event.set()
+            time.sleep(0.5)
+        return pair, days_s, times_s, rl
+
+    completed_count = 0
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        futures = [pool.submit(fetch_pair_sched, p) for p in ordered_pairs]
+        for fut in as_completed(futures):
+            try:
+                pair, days_s, times_s, _ = fut.result()
+                completed_count += 1
+                if days_s:
+                    fresh_ryanair[pair] = {
+                        "name": "Ryanair",
+                        "iata": "FR",
+                        "days": sorted(days_s),
+                        "sample_times": sorted(times_s),
+                    }
+                if completed_count % 500 == 0:
+                    print(f"  [RYANAIR GLOBAL] Progresso: {completed_count}/{len(ordered_pairs)} tratte controllate ({len(fresh_ryanair)} attive con orari)...")
+            except Exception:
+                continue
+
+    complete_run = (not stop_event.is_set()) and ((time.time() - t0) <= max_seconds) and (len(fresh_ryanair) > 100)
+    print(f"[RYANAIR GLOBAL] Scaricate {len(fresh_ryanair)} tratte Ryanair attive in {time.time() - t0:.1f}s (completo={complete_run}).")
+
+    # 4) Merge sicuro dentro routes_index: aggiorna SOLO "Ryanair", lasciando intatte tutte le altre compagnie!
+    if complete_run:
+        # Rimuove le vecchie voci Ryanair non piu attive, preservando tutte le altre compagnie
+        for pair in list(routes_index.keys()):
+            if pair not in fresh_ryanair:
+                others = [a for a in routes_index[pair]["airlines"] if a.get("name") != "Ryanair"]
+                if others:
+                    routes_index[pair]["airlines"] = others
+                else:
+                    del routes_index[pair]
+
+    for pair, ryan_entry in fresh_ryanair.items():
+        orig, dest = pair
+        if pair in routes_index:
+            others = [a for a in routes_index[pair]["airlines"] if a.get("name") != "Ryanair"]
+            others.append(ryan_entry)
+            others.sort(key=lambda x: x["name"])
+            routes_index[pair]["airlines"] = others
+        else:
+            routes_index[pair] = {
+                "from": orig,
+                "to": dest,
+                "airlines": [ryan_entry],
+            }
+
+    return len(fresh_ryanair) > 0
 # ==============================================================================
 
 
@@ -530,7 +651,6 @@ def parse_days(raw_days) -> list:
         tokens = [str(t).strip().lower() for t in raw_days if str(t).strip()]
     else:
         return [1, 2, 3, 4, 5, 6, 7]
-
     days = sorted({DAY_MAP[t] for t in tokens if t in DAY_MAP})
     return days if days else [1, 2, 3, 4, 5, 6, 7]
 
@@ -560,7 +680,7 @@ def apply_city_overrides(airports_db: dict):
             airports_db[code]["city"] = nice_city
 
 
-def enrich_missing_airports(needed_codes: set, airports_db: dict, state: dict):
+def enrich_missing_airports(needed_codes: set, airports_db: dict, state: dict, allow_airlabs_fallback: bool = True):
     """Risolve coordinate e nomi citta degli aeroporti esteri GRATIS da OurAirports CSV (0 token AirLabs)."""
     to_resolve = sorted(
         c for c in needed_codes
@@ -597,32 +717,30 @@ def enrich_missing_airports(needed_codes: set, airports_db: dict, state: dict):
                             }
                             resolved += 1
                 print(f"[AIRPORTS] Risolti {resolved}/{len(to_resolve)} aeroporti gratuitamente via OurAirports.")
-            else:
-                print(f"[AIRPORTS] Download OurAirports fallito (HTTP {resp.status_code}).")
         except requests.RequestException as exc:
             print(f"[AIRPORTS] Errore rete OurAirports ({exc}).")
 
-    still_missing = sorted(c for c in needed_codes if c and (c not in airports_db or airports_db[c].get("lat") is None))
-    for code in still_missing:
-        data, status = airlabs_get("airports", {"iata_code": code}, state)
-        if status == "QUOTA_EXCEEDED":
-            print(f"[BLOCCO QUOTA] Interrotto fallback aeroporti su {code}.")
-            break
-        if status == "OK" and isinstance(data, list) and data:
-            ap = data[0]
-            lat = ap.get("lat")
-            lon = ap.get("lng") if ap.get("lng") is not None else ap.get("lon")
-            if lat is not None and lon is not None:
-                airports_db[code] = {
-                    "iata": code,
-                    "name": ap.get("name") or code,
-                    "city": CITY_OVERRIDES.get(code) or ap.get("city") or ap.get("name") or code,
-                    "country": ap.get("country_code") or "",
-                    "lat": float(lat),
-                    "lon": float(lon),
-                    "is_base": False,
-                }
-        time.sleep(0.2)
+    if allow_airlabs_fallback:
+        still_missing = sorted(c for c in needed_codes if c and (c not in airports_db or airports_db[c].get("lat") is None))
+        for code in still_missing:
+            data, status = airlabs_get("airports", {"iata_code": code}, state)
+            if status == "QUOTA_EXCEEDED":
+                break
+            if status == "OK" and isinstance(data, list) and data:
+                ap = data[0]
+                lat = ap.get("lat")
+                lon = ap.get("lng") if ap.get("lng") is not None else ap.get("lon")
+                if lat is not None and lon is not None:
+                    airports_db[code] = {
+                        "iata": code,
+                        "name": ap.get("name") or code,
+                        "city": CITY_OVERRIDES.get(code) or ap.get("city") or ap.get("name") or code,
+                        "country": ap.get("country_code") or "",
+                        "lat": float(lat),
+                        "lon": float(lon),
+                        "is_base": False,
+                    }
+            time.sleep(0.2)
 
     apply_city_overrides(airports_db)
 
@@ -663,7 +781,7 @@ def ingest_rows(rows: list, temp_routes: dict, fallback_cs_routes: dict, discove
             {"name": al_name, "iata": al_iata, "days": set(), "sample_times": set()},
         )
         entry["days"].update(days)
-        if dep_time and len(entry["sample_times"]) < 5:
+        if dep_time and len(entry["sample_times"]) < 24:
             entry["sample_times"].add(dep_time)
 
 
@@ -690,13 +808,11 @@ def try_paginated_direction(direction_param: dict, label: str, state: dict, temp
         calls += 1
         if not rows:
             if page == 1 and len(seen_sigs) >= 50:
-                print(f"  [PAGINAZIONE] {label}: offset=50 vuoto -> paginazione non attiva su piano Free.")
                 return False, calls, raw_rows, discovered_carriers, "NO_PAGINATION"
             return True, calls, raw_rows, discovered_carriers, "OK"
 
         new_sigs = [row_signature(r) for r in rows if row_signature(r) not in seen_sigs]
         if page > 0 and not new_sigs:
-            print(f"  [PAGINAZIONE] {label}: offset={offset} ha restituito righe duplicate -> paginazione ignorata da AirLabs.")
             return False, calls, raw_rows, discovered_carriers, "NO_PAGINATION"
 
         seen_sigs.update(new_sigs)
@@ -709,44 +825,49 @@ def try_paginated_direction(direction_param: dict, label: str, state: dict, temp
                     discovered_carriers.append(c)
 
         if len(rows) < 50:
-            print(f"  [PAGINAZIONE OK] {label}: scaricate tutte le {page + 1} pagine ({raw_rows} voli) in {calls} chiamate!")
             return True, calls, raw_rows, discovered_carriers, "OK"
-
-        time.sleep(0.18)
+        time.sleep(0.16)
 
     return True, calls, raw_rows, discovered_carriers, "OK"
 
 
-def scan_airport_routes(iata: str, now: datetime, state: dict, routes_index: dict, airports_db: dict, discovered_airports: set):
-    """Combina API diretta Ryanair (0 token AirLabs, 100% completa) + AirLabs per tutte le altre compagnie."""
+def scan_airport_routes(iata: str, now: datetime, state: dict, routes_index: dict, airports_db: dict, discovered_airports: set, ryanair_already_synced: bool = False):
+    """Aggiorna le compagnie AirLabs + Ryanair (se non gia appena sincronizzato globalmente) per un aeroporto base."""
     temp_routes = {}
     fallback_cs_routes = {}
     calls_made = 0
-    raw_rows_total = 0
 
-    # 0) Scarica TUTTE le rotte Ryanair direttamente da Ryanair (0 token AirLabs!)
-    ryanair_direct_ok = fetch_ryanair_routes_for_airport(iata, now, temp_routes, airports_db, discovered_airports)
+    if ryanair_already_synced:
+        # Preserva i voli Ryanair gia freschi appena scaricati dal sync globale
+        for pair, r_obj in routes_index.items():
+            if pair[0] == iata or pair[1] == iata:
+                for al in r_obj.get("airlines", []):
+                    if al.get("name") == "Ryanair":
+                        temp_routes.setdefault(pair, {})["Ryanair"] = {
+                            "name": "Ryanair",
+                            "iata": al.get("iata", "FR"),
+                            "days": set(al.get("days", [])),
+                            "sample_times": set(al.get("sample_times", [])),
+                        }
+        ryanair_direct_ok = True
+    else:
+        ryanair_direct_ok = fetch_ryanair_routes_for_airport(iata, now, temp_routes, airports_db, discovered_airports)
 
-    # 1) AirLabs per tutte le altre compagnie (o anche Ryanair se l'API Ryanair non fosse raggiungibile)
-    dep_ok, c1, r1, carriers1, st1 = try_paginated_direction(
+    dep_ok, c1, _, carriers1, st1 = try_paginated_direction(
         {"dep_iata": iata}, f"{iata} partenze", state, temp_routes, fallback_cs_routes, discovered_airports, skip_ryanair=ryanair_direct_ok
     )
     calls_made += c1
-    raw_rows_total += r1
     if st1 == "QUOTA_EXCEEDED":
         return "QUOTA_EXCEEDED"
 
-    arr_ok, c2, r2, carriers2, st2 = try_paginated_direction(
+    arr_ok, c2, _, carriers2, st2 = try_paginated_direction(
         {"arr_iata": iata}, f"{iata} arrivi", state, temp_routes, fallback_cs_routes, discovered_airports, skip_ryanair=ryanair_direct_ok
     )
     calls_made += c2
-    raw_rows_total += r2
     if st2 == "QUOTA_EXCEEDED":
         return "QUOTA_EXCEEDED"
 
-    # 2) Fallback per compagnia se la paginazione AirLabs e bloccata sul piano Free
     if not (dep_ok and arr_ok):
-        print(f"  [FALLBACK AIRLABS] Scansione per compagnia su {iata} (skip Ryanair={ryanair_direct_ok})...")
         discovered_carriers = list(AIRPORT_AIRLINES.get(iata, []))
         seen_carriers = set(discovered_carriers)
         for c in carriers1 + carriers2:
@@ -772,13 +893,11 @@ def scan_airport_routes(iata: str, now: datetime, state: dict, routes_index: dic
                 calls_made += 1
                 if rows:
                     active_carriers.append(carrier)
-                    raw_rows_total += len(rows)
                     ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state, skip_ryanair=ryanair_direct_ok)
                     if len(rows) >= 50:
                         dests = sorted({(r.get("arr_iata") or "").upper() for r in rows if r.get("arr_iata")})
                         if dests:
                             capped_cutoffs.append(dests[-1])
-                            print(f"  [CAP 50] {iata} - {carrier} tagliato alla destinazione '{dests[-1]}'.")
             time.sleep(0.14)
 
         for carrier in active_carriers:
@@ -791,14 +910,12 @@ def scan_airport_routes(iata: str, now: datetime, state: dict, routes_index: dic
                 return "QUOTA_EXCEEDED"
             if status == "OK" and isinstance(rows, list) and rows:
                 calls_made += 1
-                raw_rows_total += len(rows)
                 ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state, skip_ryanair=ryanair_direct_ok)
             time.sleep(0.14)
 
         if capped_cutoffs:
             min_cutoff = min(capped_cutoffs)
             to_check = [d for d in CANDIDATE_DESTINATIONS if d != iata and d >= min_cutoff]
-            print(f"  [RECUPERO] Controllo {len(to_check)} destinazioni candidate >= '{min_cutoff}' per {iata}...")
             for dest in to_check:
                 rows, status = airlabs_get(
                     "routes",
@@ -810,7 +927,6 @@ def scan_airport_routes(iata: str, now: datetime, state: dict, routes_index: dic
                 if status == "OK" and isinstance(rows, list):
                     calls_made += 1
                     if rows:
-                        raw_rows_total += len(rows)
                         ingest_rows(rows, temp_routes, fallback_cs_routes, discovered_airports, state, skip_ryanair=ryanair_direct_ok)
                         ret_rows, ret_status = airlabs_get(
                             "routes",
@@ -821,7 +937,6 @@ def scan_airport_routes(iata: str, now: datetime, state: dict, routes_index: dic
                             break
                         if ret_status == "OK" and isinstance(ret_rows, list) and ret_rows:
                             calls_made += 1
-                            raw_rows_total += len(ret_rows)
                             ingest_rows(ret_rows, temp_routes, fallback_cs_routes, discovered_airports, state, skip_ryanair=ryanair_direct_ok)
                 time.sleep(0.14)
 
@@ -852,7 +967,6 @@ def scan_airport_routes(iata: str, now: datetime, state: dict, routes_index: dic
     out_dests = sorted({d for (o, d) in temp_routes if o == iata})
     in_origs = sorted({o for (o, d) in temp_routes if d == iata})
     print(f"[INFO] {iata}: {calls_made} chiamate AirLabs, {len(out_dests)} destinazioni in partenza, {len(in_origs)} in arrivo.")
-    print(f"[CHECK] {iata} contiene DUB={'DUB' in out_dests}, BVA={'BVA' in out_dests}, STN={'STN' in out_dests}, MAD={'MAD' in out_dests}")
     return "OK"
 
 
@@ -861,7 +975,7 @@ def parse_args():
     parser.add_argument(
         "--airport",
         default=os.getenv("TARGET_AIRPORT", "AUTO"),
-        help="AUTO (schedulatore), ALL (tutti gli 8), oppure singolo codice IATA (es. BLQ)",
+        help="AUTO, RYANAIR (tutta la flotta Ryanair), ALL (tutti gli 8), oppure singolo IATA (es. BLQ)",
     )
     parser.add_argument(
         "--force",
@@ -874,12 +988,12 @@ def parse_args():
 
 def main():
     print(f"=== FlightMap Scanner {SCANNER_VERSION} ===")
-    if not AIRLABS_KEY or AIRLABS_KEY == "INCOLLA_QUI_LA_TUA_API_KEY":
-        raise SystemExit("Configura prima il secret AIRLABS_KEY su GitHub (o la variabile d'ambiente locale).")
-
     args = parse_args()
     target = (args.airport or "AUTO").strip().upper()
     force = bool(args.force)
+
+    if target != "RYANAIR" and (not AIRLABS_KEY or AIRLABS_KEY == "INCOLLA_QUI_LA_TUA_API_KEY"):
+        raise SystemExit("Configura prima il secret AIRLABS_KEY su GitHub (o la variabile d'ambiente locale).")
 
     now = datetime.now(ITALY_TZ)
     state = load_state(now)
@@ -889,47 +1003,61 @@ def main():
     routes_index = {(r["from"], r["to"]): r for r in existing.get("routes", [])}
     discovered_airports = set(airports_db.keys())
 
-    if target == "ALL":
-        to_scan = list(AIRPORT_SCHEDULE.keys())
-        print(f"[MODO ALL] Forzo scansione completa su: {', '.join(to_scan)}")
-    elif target in AIRPORT_SCHEDULE:
-        to_scan = [target]
-        print(f"[MODO SINGOLO] Sincronizzo solo {target} (preservo gli altri aeroporti in cache).")
-    elif target == "AUTO":
+    ryanair_synced_now = False
+
+    # 1) Modalita dedicata RYANAIR (manuale, 0 token AirLabs, tutta la flotta europea)
+    if target == "RYANAIR":
+        ok = sync_global_ryanair_fleet(now, routes_index, airports_db, discovered_airports)
+        if ok:
+            state["last_scan"]["RYANAIR"] = now.isoformat(timespec="seconds")
+            ryanair_synced_now = True
         to_scan = []
-        for code, interval_days in AIRPORT_SCHEDULE.items():
-            last_str = state["last_scan"].get(code)
-            if force or not last_str:
-                to_scan.append(code)
-            else:
-                last_dt = datetime.fromisoformat(last_str)
-                if last_dt.tzinfo is None:
-                    last_dt = last_dt.replace(tzinfo=ITALY_TZ)
-                if (now - last_dt).days >= interval_days:
-                    to_scan.append(code)
     else:
-        raise SystemExit(f"Codice aeroporto non valido: '{target}'. Valori ammessi: AUTO, ALL, {', '.join(AIRPORT_SCHEDULE.keys())}")
+        # In AUTO, aggiorna settimanalmente l'intera flotta Ryanair (0 token AirLabs!)
+        if target == "AUTO" and (force or days_since(state["last_scan"].get("RYANAIR"), now) >= RYANAIR_GLOBAL_INTERVAL_DAYS):
+            ok = sync_global_ryanair_fleet(now, routes_index, airports_db, discovered_airports)
+            if ok:
+                state["last_scan"]["RYANAIR"] = now.isoformat(timespec="seconds")
+                ryanair_synced_now = True
 
-    if not to_scan:
-        print("[OK] Tutti gli aeroporti sono già aggiornati secondo la frequenza impostata. 0 chiamate usate.")
+        if target == "ALL":
+            to_scan = list(AIRPORT_SCHEDULE.keys())
+            print(f"[MODO ALL] Forzo scansione completa su: {', '.join(to_scan)}")
+        elif target in AIRPORT_SCHEDULE:
+            to_scan = [target]
+            print(f"[MODO SINGOLO] Sincronizzo solo {target} (preservo gli altri aeroporti in cache).")
+        elif target == "AUTO":
+            to_scan = [
+                code for code, interval_days in AIRPORT_SCHEDULE.items()
+                if force or days_since(state["last_scan"].get(code), now) >= interval_days
+            ]
+        else:
+            raise SystemExit(f"Valore non valido: '{target}'. Ammessi: RYANAIR, AUTO, ALL, {', '.join(AIRPORT_SCHEDULE.keys())}")
+
+    if not to_scan and not ryanair_synced_now:
+        print("[OK] Tutto già aggiornato secondo le frequenze impostate. 0 chiamate usate.")
     else:
-        print(f"[SCAN] Aeroporti in coda: {', '.join(to_scan)}")
-        for code in to_scan:
-            print(f"[SCAN] Avvio scaricamento rotte per {code}...")
-            status = scan_airport_routes(code, now, state, routes_index, airports_db, discovered_airports)
-            if status == "QUOTA_EXCEEDED":
-                print(f"[BLOCCO QUOTA] Fermato su {code}: {state['blocked_reason']}")
-                break
+        if to_scan:
+            print(f"[SCAN] Aeroporti AirLabs in coda: {', '.join(to_scan)}")
+            for code in to_scan:
+                print(f"[SCAN] Avvio scaricamento rotte per {code}...")
+                status = scan_airport_routes(
+                    code, now, state, routes_index, airports_db, discovered_airports,
+                    ryanair_already_synced=ryanair_synced_now,
+                )
+                if status == "QUOTA_EXCEEDED":
+                    print(f"[BLOCCO QUOTA] Fermato su {code}: {state['blocked_reason']}")
+                    break
 
-            state["last_scan"][code] = now.isoformat(timespec="seconds")
-            if not (isinstance(state.get("remote_remaining"), int) and state["remote_remaining"] <= MIN_RESERVE_CALLS):
-                state["blocked"] = False
-                state["blocked_reason"] = None
-            rem_str = f" (rimaste su AirLabs: {state['remote_remaining']})" if state.get("remote_remaining") is not None else ""
-            print(f"[OK] {code} completato. Chiamate usate: {state['units_used']}/{state.get('units_limit', MAX_MONTHLY_CALLS)}{rem_str}")
-            time.sleep(0.3)
+                state["last_scan"][code] = now.isoformat(timespec="seconds")
+                if not (isinstance(state.get("remote_remaining"), int) and state["remote_remaining"] <= MIN_RESERVE_CALLS):
+                    state["blocked"] = False
+                    state["blocked_reason"] = None
+                rem_str = f" (rimaste su AirLabs: {state['remote_remaining']})" if state.get("remote_remaining") is not None else ""
+                print(f"[OK] {code} completato. Chiamate AirLabs: {state['units_used']}/{state.get('units_limit', MAX_MONTHLY_CALLS)}{rem_str}")
+                time.sleep(0.3)
 
-    enrich_missing_airports(discovered_airports, airports_db, state)
+    enrich_missing_airports(discovered_airports, airports_db, state, allow_airlabs_fallback=(target != "RYANAIR"))
 
     valid_routes = [
         r for r in routes_index.values()
@@ -939,7 +1067,7 @@ def main():
     if dropped > 0:
         print(f"[WARN] {dropped} rotte escluse per coordinate mancanti.")
 
-    save_json(STATE_FILE, state)
+    save_json(STATE_FILE, state, compact=False)
     output = {
         "generated_at": now.isoformat(timespec="seconds"),
         "quota_status": {
@@ -954,7 +1082,8 @@ def main():
         "airports": airports_db,
         "routes": valid_routes,
     }
-    save_json(ROUTES_FILE, output)
+    # Usa formato compatto quando il file supera le 500 rotte per mantenere il caricamento ultra-veloce su mobile
+    save_json(ROUTES_FILE, output, compact=(len(valid_routes) > 500))
     print(f"[FINE] Salvato {ROUTES_FILE}: {len(airports_db)} aeroporti, {len(valid_routes)} rotte.")
 
 
