@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FlightMap Italia — Rotte Dirette e Giorni di Volo</title>
+  <title>FlightMap Italia — Rotte Dirette, Orari e Prezzi Ryanair</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -37,10 +37,36 @@
       transition: opacity 0.15s ease;
     }
 
+    /* Live Price Map Pins */
+    .price-pin {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #ffffff;
+      white-space: nowrap;
+      border: 1.5px solid rgba(255, 255, 255, 0.92);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.55);
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    .price-pin:hover, .price-pin.selected {
+      transform: scale(1.16);
+      z-index: 999 !important;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.65), 0 6px 16px rgba(0, 0, 0, 0.7);
+    }
+    .price-cheap { background: linear-gradient(135deg, #059669, #10b981); }
+    .price-mid   { background: linear-gradient(135deg, #d97706, #f59e0b); color: #0f172a; border-color: #fef3c7; }
+    .price-high  { background: linear-gradient(135deg, #e11d48, #f43f5e); }
+
     /* Dual Range Slider */
     .dual-slider {
       position: relative;
-      height: 24px;
+      height: 22px;
       display: flex;
       align-items: center;
     }
@@ -62,7 +88,7 @@
       left: 0;
       top: 0;
       width: 100%;
-      height: 24px;
+      height: 22px;
       margin: 0;
       background: transparent;
       pointer-events: none;
@@ -77,12 +103,12 @@
       -webkit-appearance: none;
       appearance: none;
       pointer-events: auto;
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       border-radius: 999px;
       border: 2px solid #f8fafc;
       cursor: pointer;
-      margin-top: -5.5px;
+      margin-top: -5px;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
       transition: transform 0.1s ease;
     }
@@ -95,8 +121,8 @@
     }
     .dual-slider input[type="range"]::-moz-range-thumb {
       pointer-events: auto;
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       border-radius: 999px;
       border: 2px solid #f8fafc;
       cursor: pointer;
@@ -106,6 +132,12 @@
     .slider-sky input[type="range"]::-moz-range-thumb { background: #0284c7; }
     .slider-emerald input[type="range"]::-webkit-slider-thumb { background: #059669; }
     .slider-emerald input[type="range"]::-moz-range-thumb { background: #059669; }
+
+    /* Dark date picker icon */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.85);
+      cursor: pointer;
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 select-none">
@@ -128,10 +160,10 @@
   <div class="flex h-full w-full relative">
 
     <!-- Left Sidebar -->
-    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-30 w-full max-w-[395px] bg-slate-900/95 backdrop-blur-md border-r border-slate-800 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-200 shadow-2xl">
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-30 w-full max-w-[400px] bg-slate-900/95 backdrop-blur-md border-r border-slate-800 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-200 shadow-2xl">
 
       <!-- Header -->
-      <div class="p-3.5 border-b border-slate-800 flex items-center justify-between gap-2">
+      <div class="p-3 border-b border-slate-800 flex items-center justify-between gap-2">
         <div class="flex items-center gap-2.5 min-w-0">
           <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-lg shadow-md shrink-0">✈️</div>
           <div class="min-w-0">
@@ -155,8 +187,8 @@
       <div id="quotaBanner" class="hidden px-4 py-2 border-b border-slate-800 text-xs"></div>
 
       <!-- Quick Base Airports Bar -->
-      <div class="px-3.5 pt-2.5 pb-2 border-b border-slate-800/80">
-        <div class="flex items-center justify-between mb-1.5">
+      <div class="px-3.5 pt-2 pb-2 border-b border-slate-800/80">
+        <div class="flex items-center justify-between mb-1">
           <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">I tuoi 8 aeroporti</span>
           <span id="routeCountBadge" class="text-[11px] font-semibold text-sky-400">0 rotte</span>
         </div>
@@ -164,13 +196,13 @@
       </div>
 
       <!-- Controls: Mode + Search + Filters -->
-      <div class="p-3.5 space-y-2.5 border-b border-slate-800">
+      <div class="p-3 space-y-2 border-b border-slate-800">
         <!-- Direction Mode -->
         <div class="grid grid-cols-2 bg-slate-950 p-1 rounded-xl border border-slate-800">
-          <button id="modeFromBtn" class="py-1.5 text-xs font-semibold rounded-lg transition bg-sky-600 text-white shadow">
+          <button id="modeFromBtn" class="py-1 text-xs font-semibold rounded-lg transition bg-sky-600 text-white shadow">
             🛫 Parto da
           </button>
-          <button id="modeToBtn" class="py-1.5 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white">
+          <button id="modeToBtn" class="py-1 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white">
             🛬 Arrivo a
           </button>
         </div>
@@ -179,7 +211,7 @@
         <div class="relative">
           <input id="airportSearch" type="text" autocomplete="off"
                  placeholder="Cerca città o aeroporto (es. Bruxelles, Parigi, BLQ)..."
-                 class="w-full bg-slate-950 border border-slate-700 focus:border-sky-500 focus:outline-none rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 pr-8" />
+                 class="w-full bg-slate-950 border border-slate-700 focus:border-sky-500 focus:outline-none rounded-xl px-3 py-1.5 text-sm text-white placeholder-slate-500 pr-8" />
           <button id="clearSearchBtn" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs">✕</button>
           <div id="searchDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-64 overflow-y-auto custom-scroll z-40"></div>
         </div>
@@ -191,6 +223,7 @@
           </select>
           <select id="sortSelect" class="bg-slate-950 border border-slate-700 focus:border-sky-500 focus:outline-none rounded-xl px-2.5 py-1.5 text-xs text-slate-200">
             <option value="city">Ordina: Città (A-Z)</option>
+            <option value="price">Ordina: Prezzo (più basso)</option>
             <option value="freq">Ordina: Frequenza</option>
             <option value="airlines">Ordina: N° compagnie</option>
           </select>
@@ -206,7 +239,7 @@
         </div>
 
         <!-- Departure Time Ranges (Andata & Ritorno) -->
-        <div class="bg-slate-950/75 border border-slate-800 rounded-xl px-3 py-2">
+        <div class="bg-slate-950/75 border border-slate-800 rounded-xl px-3 py-1.5">
           <button id="toggleTimesAccordion" type="button" class="w-full flex items-center justify-between text-left">
             <div class="flex items-center gap-2">
               <span class="text-xs font-semibold text-slate-200">Orari di partenza</span>
@@ -214,14 +247,14 @@
             </div>
             <div class="flex items-center gap-2">
               <span id="resetTimesBtn" class="hidden text-[11px] text-sky-400 hover:underline">Reset</span>
-              <span id="timesChevron" class="text-slate-400 text-xs transition-transform duration-150">▲</span>
+              <span id="timesChevron" class="text-slate-400 text-xs">▲</span>
             </div>
           </button>
 
-          <div id="timesAccordionBody" class="mt-2.5 space-y-2.5">
+          <div id="timesAccordionBody" class="mt-2 space-y-2">
             <!-- Andata -->
             <div>
-              <div class="flex items-center justify-between text-[11px] mb-1">
+              <div class="flex items-center justify-between text-[11px] mb-0.5">
                 <span class="font-medium text-slate-300">Andata</span>
                 <span id="outTimeLabel" class="font-mono text-sky-300 font-semibold">00:00 - 23:59</span>
               </div>
@@ -235,7 +268,7 @@
 
             <!-- Ritorno -->
             <div>
-              <div class="flex items-center justify-between text-[11px] mb-1">
+              <div class="flex items-center justify-between text-[11px] mb-0.5">
                 <span class="font-medium text-slate-300">Ritorno</span>
                 <span id="retTimeLabel" class="font-mono text-emerald-300 font-semibold">00:00 - 23:59</span>
               </div>
@@ -246,6 +279,47 @@
                 <input id="retMaxRange" type="range" min="0" max="1440" step="30" value="1440" />
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Live Ryanair Fare Search Box -->
+        <div class="bg-gradient-to-br from-sky-950/70 to-slate-950 border border-sky-500/30 rounded-xl p-2.5 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-sky-300 flex items-center gap-1">
+              💶 Prezzi Live Ryanair
+            </span>
+            <button id="openWorkerConfigBtn" title="Configura URL Cloudflare Worker" class="text-[11px] text-slate-400 hover:text-white flex items-center gap-1">
+              <span id="workerStatusDot" class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>
+              <span>Configura ponte</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-1.5">
+            <div>
+              <label for="priceOutDate" class="block text-[10px] text-slate-400 mb-0.5">Data Andata</label>
+              <input id="priceOutDate" type="date" class="w-full bg-slate-900 border border-slate-700 focus:border-sky-500 focus:outline-none rounded-lg px-2 py-1 text-xs text-white" />
+            </div>
+            <div>
+              <label for="priceRetDate" class="block text-[10px] text-slate-400 mb-0.5">Data Ritorno (opz.)</label>
+              <input id="priceRetDate" type="date" class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 focus:outline-none rounded-lg px-2 py-1 text-xs text-white" />
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <button id="searchPricesBtn" type="button" class="flex-1 py-1.5 px-3 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow transition flex items-center justify-center gap-1.5">
+              <span>🔍</span> <span id="searchPricesBtnText">Cerca prezzi</span>
+            </button>
+            <button id="clearPricesBtn" type="button" title="Rimuovi prezzi dalla mappa" class="hidden px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200">
+              ✕
+            </button>
+          </div>
+
+          <div id="priceSearchStatus" class="hidden text-[11px] text-slate-300 flex items-center justify-between gap-2 pt-0.5">
+            <span id="priceStatusText" class="truncate"></span>
+            <label class="inline-flex items-center gap-1 text-[10px] text-sky-300 shrink-0 cursor-pointer">
+              <input id="onlyPricedCheckbox" type="checkbox" checked class="rounded border-slate-600 bg-slate-900 text-sky-500" />
+              <span>Solo con prezzo</span>
+            </label>
           </div>
         </div>
       </div>
@@ -282,7 +356,7 @@
       </div>
 
       <!-- Route Detail Panel (Floating Bottom Right) -->
-      <div id="routeDetailCard" class="hidden fixed md:absolute bottom-4 right-4 left-4 md:left-auto md:w-[420px] z-20 bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
+      <div id="routeDetailCard" class="hidden fixed md:absolute bottom-4 right-4 left-4 md:left-auto md:w-[430px] z-20 bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
         <div class="p-4 border-b border-slate-800 flex items-start justify-between gap-3 bg-gradient-to-r from-slate-900 to-slate-800/70">
           <div class="min-w-0">
             <div class="flex items-center gap-2">
@@ -301,7 +375,7 @@
             <button id="closeDetailBtn" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs">✕</button>
           </div>
         </div>
-        <div id="detailAirlinesList" class="p-4 max-h-[44vh] overflow-y-auto custom-scroll space-y-3"></div>
+        <div id="detailAirlinesList" class="p-4 max-h-[48vh] overflow-y-auto custom-scroll space-y-3"></div>
       </div>
 
       <!-- Quota Modal -->
@@ -314,15 +388,42 @@
           <div id="quotaModalBody" class="p-5 text-sm text-slate-300 space-y-3 max-h-[75vh] overflow-y-auto custom-scroll"></div>
         </div>
       </div>
+
+      <!-- Cloudflare Worker Config Modal -->
+      <div id="workerModal" class="hidden fixed inset-0 z-50 bg-black/65 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+            <h2 class="font-bold text-white text-base">Ponte Prezzi Live Ryanair</h2>
+            <button id="closeWorkerModal" class="text-slate-400 hover:text-white">✕</button>
+          </div>
+          <div class="p-5 text-sm text-slate-300 space-y-3">
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Incolla qui l'indirizzo del tuo <strong>Cloudflare Worker</strong> gratuito (es. <code class="text-sky-300">https://ryanair-proxy.tuonome.workers.dev</code>). Verrà salvato nel browser su questo dispositivo.
+            </p>
+            <div>
+              <label for="workerUrlInput" class="block text-xs font-semibold text-slate-300 mb-1">URL Cloudflare Worker</label>
+              <input id="workerUrlInput" type="url" placeholder="https://ryanair-proxy.tuonome.workers.dev"
+                     class="w-full bg-slate-950 border border-slate-700 focus:border-sky-500 focus:outline-none rounded-xl px-3 py-2 text-xs text-white font-mono" />
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-2">
+              <button id="cancelWorkerBtn" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300">Annulla</button>
+              <button id="saveWorkerBtn" class="px-4 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-xs font-bold text-white">Salva e chiudi</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 
 <script>
+// Opzionale: se vuoi fissare l'URL del tuo Cloudflare Worker direttamente nel codice, incollalo tra le virgolette qui sotto:
+const DEFAULT_RYANAIR_WORKER_URL = "";
+const WORKER_STORAGE_KEY = "flightmap_ryanair_worker_url";
+
 const BASE_ORDER = ["BLQ", "VRN", "BGY", "FLR", "TSF", "LIN", "MXP", "VCE"];
 const DAY_SHORT = ["", "L", "M", "M", "G", "V", "S", "D"];
 const DAY_LABEL = ["", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
 
-// Aree metropolitane note con piu aeroporti (usate per generare "<Citta> - Tutti")
 const METRO_GROUPS = {
   "Milano": ["LIN", "MXP", "BGY"],
   "Venezia": ["VCE", "TSF"],
@@ -346,32 +447,14 @@ const METRO_GROUPS = {
 };
 
 const CITY_NAME_NORMALIZE = {
-  "london": "Londra",
-  "paris": "Parigi",
-  "brussels": "Bruxelles",
-  "rome": "Roma",
-  "milan": "Milano",
-  "venice": "Venezia",
-  "stockholm": "Stoccolma",
-  "warsaw": "Varsavia",
-  "bucharest": "Bucarest",
-  "frankfurt": "Francoforte",
-  "frankfurt am main": "Francoforte",
-  "munich": "Monaco di Baviera",
-  "monaco": "Monaco di Baviera",
-  "vienna": "Vienna",
-  "prague": "Praga",
-  "lisbon": "Lisbona",
-  "athens": "Atene",
-  "dublin": "Dublino",
-  "edinburgh": "Edimburgo",
-  "krakow": "Cracovia",
-  "kraków": "Cracovia",
-  "barcelona": "Barcellona",
-  "berlin": "Berlino",
-  "zurich": "Zurigo",
-  "copenhagen": "Copenaghen",
-  "cologne": "Colonia"
+  "london": "Londra", "paris": "Parigi", "brussels": "Bruxelles", "rome": "Roma",
+  "milan": "Milano", "venice": "Venezia", "stockholm": "Stoccolma", "warsaw": "Varsavia",
+  "bucharest": "Bucarest", "frankfurt": "Francoforte", "frankfurt am main": "Francoforte",
+  "munich": "Monaco di Baviera", "monaco": "Monaco di Baviera", "vienna": "Vienna",
+  "prague": "Praga", "lisbon": "Lisbona", "athens": "Atene", "dublin": "Dublino",
+  "edinburgh": "Edimburgo", "krakow": "Cracovia", "kraków": "Cracovia",
+  "barcelona": "Barcellona", "berlin": "Berlino", "zurich": "Zurigo",
+  "copenhagen": "Copenaghen", "cologne": "Colonia"
 };
 
 function buildDemoDataset() {
@@ -387,18 +470,13 @@ function buildDemoDataset() {
     ARN: { iata: "ARN", name: "Stockholm Arlanda", city: "Stoccolma (Arlanda)", country: "SE", lat: 59.6519, lon: 17.9186, is_base: false },
     STN: { iata: "STN", name: "London Stansted", city: "Londra (Stansted)", country: "GB", lat: 51.8850, lon: 0.2350, is_base: false },
     LHR: { iata: "LHR", name: "London Heathrow", city: "Londra (Heathrow)", country: "GB", lat: 51.4700, lon: -0.4543, is_base: false },
-    MAD: { iata: "MAD", name: "Madrid Barajas", city: "Madrid", country: "ES", lat: 40.4983, lon: -3.5676, is_base: false },
     BCN: { iata: "BCN", name: "Barcelona El Prat", city: "Barcellona", country: "ES", lat: 41.2974, lon: 2.0833, is_base: false },
-    PMI: { iata: "PMI", name: "Palma de Mallorca", city: "Palma di Maiorca", country: "ES", lat: 39.5517, lon: 2.7388, is_base: false },
     CDG: { iata: "CDG", name: "Paris Charles de Gaulle", city: "Parigi (Charles de Gaulle)", country: "FR", lat: 49.0097, lon: 2.5479, is_base: false },
     BVA: { iata: "BVA", name: "Paris Beauvais", city: "Parigi (Beauvais)", country: "FR", lat: 49.4544, lon: 2.1128, is_base: false },
     BRU: { iata: "BRU", name: "Brussels Airport", city: "Bruxelles (Zaventem)", country: "BE", lat: 50.9010, lon: 4.4844, is_base: false },
     CRL: { iata: "CRL", name: "Brussels South Charleroi", city: "Bruxelles (Charleroi)", country: "BE", lat: 50.4592, lon: 4.4538, is_base: false },
-    MUC: { iata: "MUC", name: "Munich Airport", city: "Monaco di Baviera", country: "DE", lat: 48.3537, lon: 11.7750, is_base: false },
-    FRA: { iata: "FRA", name: "Frankfurt Airport", city: "Francoforte", country: "DE", lat: 50.0379, lon: 8.5622, is_base: false },
     DUB: { iata: "DUB", name: "Dublin Airport", city: "Dublino", country: "IE", lat: 53.4213, lon: -6.2701, is_base: false },
-    KRK: { iata: "KRK", name: "Krakow Balice", city: "Cracovia", country: "PL", lat: 50.0777, lon: 19.7848, is_base: false },
-    AMS: { iata: "AMS", name: "Amsterdam Schiphol", city: "Amsterdam", country: "NL", lat: 52.3105, lon: 4.7683, is_base: false }
+    KRK: { iata: "KRK", name: "Krakow Balice", city: "Cracovia", country: "PL", lat: 50.0777, lon: 19.7848, is_base: false }
   };
   const pairs = [
     ["BLQ", "STN", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["06:40","14:15","21:05"] }]],
@@ -410,11 +488,7 @@ function buildDemoDataset() {
     ["BLQ", "DUB", [{ name: "Ryanair", iata: "FR", days: [1,3,5,6,7], sample_times: ["11:05"] }]],
     ["BLQ", "BCN", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["08:20","19:40"] }, { name: "Vueling", iata: "VY", days: [1,3,5,7], sample_times: ["13:15"] }]],
     ["BLQ", "ARN", [{ name: "Ryanair", iata: "FR", days: [2,5,7], sample_times: ["15:20"] }]],
-    ["BLQ", "KRK", [{ name: "Ryanair", iata: "FR", days: [1,3,5,7], sample_times: ["09:40"] }]],
-    ["BGY", "CRL", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["06:55","18:20"] }]],
-    ["BGY", "BVA", [{ name: "Ryanair", iata: "FR", days: [1,2,3,4,5,6,7], sample_times: ["07:45","19:10"] }]],
-    ["LIN", "BRU", [{ name: "Brussels Airlines", iata: "SN", days: [1,2,3,4,5,7], sample_times: ["10:50"] }]],
-    ["LIN", "CDG", [{ name: "ITA Airways", iata: "AZ", days: [1,2,3,4,5,6,7], sample_times: ["07:30","16:20"] }]]
+    ["BLQ", "KRK", [{ name: "Ryanair", iata: "FR", days: [1,3,5,7], sample_times: ["09:40"] }]]
   ];
   const routes = [];
   for (const [a, b, airlines] of pairs) {
@@ -432,22 +506,30 @@ function shiftTime(hhmm, hours) {
 // ==================== STATO & INDICI ====================
 let dataset = buildDemoDataset();
 let routesByPair = new Map();
-let cityGroups = new Map(); // "Bruxelles" -> ["BRU", "CRL"]
+let cityGroups = new Map();
 
 let state = {
-  selectedAirport: "BLQ",   // Codice IATA (es. "BLQ") oppure null se selezionato un gruppo citta
-  selectedCityGroup: null,  // Nome citta (es. "Bruxelles") oppure null
-  mode: "from",             // "from" | "to"
+  selectedAirport: "BLQ",
+  selectedCityGroup: null,
+  mode: "from",
   airlineFilter: "",
   dayFilters: new Set(),
-  outMin: 0,                // minuti 0..1440
+  outMin: 0,
   outMax: 1440,
   retMin: 0,
   retMax: 1440,
   timesOpen: true,
   sortBy: "city",
   selectedRouteKey: null,
-  darkTheme: true
+  darkTheme: true,
+  // Stato prezzi live Ryanair
+  workerUrl: (localStorage.getItem(WORKER_STORAGE_KEY) || DEFAULT_RYANAIR_WORKER_URL || "").trim().replace(/\/+$/, ""),
+  priceOutDate: "",
+  priceRetDate: "",
+  liveFaresByPair: new Map(), // "BLQ->BVA" -> fareObj
+  liveTripType: null,         // "roundTrip" | "oneWay" | null
+  onlyPriced: true,
+  isSearchingPrices: false
 };
 
 function rebuildIndexes() {
@@ -455,19 +537,11 @@ function rebuildIndexes() {
   for (const r of dataset.routes) {
     routesByPair.set(`${r.from}->${r.to}`, r);
   }
-
-  // Costruisce gruppi "Citta - Tutti" per tutte le citta con >= 2 aeroporti presenti nel dataset
   const groups = new Map();
-
-  // 1) Gruppi metropolitani noti (es. Milano -> LIN, MXP, BGY; Bruxelles -> BRU, CRL; Parigi -> CDG, ORY, BVA)
   for (const [metroName, codes] of Object.entries(METRO_GROUPS)) {
     const present = codes.filter(c => dataset.airports[c]);
-    if (present.length >= 2) {
-      groups.set(metroName, present);
-    }
+    if (present.length >= 2) groups.set(metroName, present);
   }
-
-  // 2) Raggruppamento automatico per tutte le altre citta con piu aeroporti
   const autoGroups = new Map();
   for (const ap of Object.values(dataset.airports)) {
     const raw = (ap.city || ap.name || ap.iata).replace(/\s*\([^)]*\)/g, "").split(",")[0].trim();
@@ -478,11 +552,8 @@ function rebuildIndexes() {
   }
   for (const [cityName, codes] of autoGroups.entries()) {
     const unique = [...new Set(codes)].sort();
-    if (unique.length >= 2 && !groups.has(cityName)) {
-      groups.set(cityName, unique);
-    }
+    if (unique.length >= 2 && !groups.has(cityName)) groups.set(cityName, unique);
   }
-
   cityGroups = groups;
 }
 
@@ -507,13 +578,19 @@ tileDark.addTo(map);
 
 const routesLayer = L.layerGroup().addTo(map);
 const markersLayer = L.layerGroup().addTo(map);
+const pricesLayer = L.layerGroup().addTo(map);
 
-// ==================== HELPERS ORARI & GEOMETRIA ====================
+// ==================== HELPERS ====================
 function formatMinutes(mins) {
   if (mins >= 1440) return "23:59";
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function formatEur(val) {
+  if (val == null || Number.isNaN(Number(val))) return "";
+  return Number(val).toLocaleString("it-IT", { minimumFractionDigits: Number.isInteger(val) ? 0 : 2, maximumFractionDigits: 2 }) + " €";
 }
 
 function timeStrToMinutes(hhmm) {
@@ -536,6 +613,7 @@ function hasTimeInRange(timesArr, minM, maxM) {
 
 function isOutTimeFiltered() { return state.outMin > 0 || state.outMax < 1440; }
 function isRetTimeFiltered() { return state.retMin > 0 || state.retMax < 1440; }
+function hasLivePrices() { return state.liveFaresByPair.size > 0; }
 
 function haversineKm(lat1, lon1, lat2, lon2) {
   const R = 6371, toRad = d => (d * Math.PI) / 180;
@@ -562,12 +640,62 @@ function buildCurvedArc(fromAp, toAp, steps = 36) {
   return pts;
 }
 
+// ==================== DEEP LINKS (OPZIONE A + B) ====================
+function buildRyanairBookingUrl(orig, dest, outDate, retDate) {
+  const params = new URLSearchParams({
+    adults: "1", teens: "0", children: "0", infants: "0",
+    dateOut: outDate,
+    isConnectedFlight: "false",
+    discount: "0",
+    promoCode: "",
+    isReturn: retDate ? "true" : "false",
+    originIata: orig,
+    destinationIata: dest
+  });
+  if (retDate) params.set("dateIn", retDate);
+  return `https://www.ryanair.com/it/it/trip/flights/select?${params.toString()}`;
+}
+
+function buildExternalSearchLinks(orig, dest, outDate, retDate) {
+  // Google Flights
+  let gfQuery = `Flights to ${dest} from ${orig}`;
+  if (outDate && retDate) gfQuery += ` on ${outDate} through ${retDate}`;
+  else if (outDate) gfQuery += ` on ${outDate} oneway`;
+  const googleFlights = `https://www.google.com/travel/flights?q=${encodeURIComponent(gfQuery)}&curr=EUR&hl=it`;
+
+  // Skyscanner (YYMMDD)
+  const toYYMMDD = d => d ? d.replace(/-/g, "").slice(2) : "";
+  let skyscanner = `https://www.skyscanner.it/trasporti/voli/${orig.toLowerCase()}/${dest.toLowerCase()}/`;
+  if (outDate && retDate) skyscanner += `${toYYMMDD(outDate)}/${toYYMMDD(retDate)}/`;
+  else if (outDate) skyscanner += `${toYYMMDD(outDate)}/`;
+
+  // AZair (DD.MM.YYYY)
+  const toDDMMYYYY = d => {
+    if (!d) return "";
+    const [y, m, day] = d.split("-");
+    return `${day}.${m}.${y}`;
+  };
+  let azair = `https://www.azair.eu/azfin.php?tp=0&searchtype=flexi&srcAirport=${orig}&dstAirport=${dest}&adults=1&currency=EUR&samedep=true&samearr=true`;
+  if (outDate) {
+    azair += `&depdate=${toDDMMYYYY(outDate)}`;
+    if (retDate) {
+      const diffDays = Math.max(0, Math.round((new Date(retDate) - new Date(outDate)) / 86400000));
+      azair += `&arrdate=${toDDMMYYYY(retDate)}&minDaysStay=${diffDays}&maxDaysStay=${diffDays}`;
+    } else {
+      azair += `&isOneway=return`;
+    }
+  }
+
+  return { googleFlights, skyscanner, azair };
+}
+
 // ==================== FILTRAGGIO ROTTE ====================
 function getMatchingRoutes() {
   const selCodes = getSelectedCodes();
   const selSet = new Set(selCodes);
   const outFiltered = isOutTimeFiltered();
   const retFiltered = isRetTimeFiltered();
+  const pricesActive = hasLivePrices();
 
   let list = dataset.routes.filter(r =>
     state.mode === "from"
@@ -576,17 +704,23 @@ function getMatchingRoutes() {
   );
 
   list = list.map(r => {
+    const pairKey = `${r.from}->${r.to}`;
+    const liveFare = state.liveFaresByPair.get(pairKey) || null;
+
+    if (pricesActive && state.onlyPriced && !liveFare) return null;
+
     const filteredAirlines = r.airlines.filter(al => {
       if (state.airlineFilter && al.name !== state.airlineFilter) return false;
       if (state.dayFilters.size > 0 && !al.days.some(d => state.dayFilters.has(d))) return false;
-      if (outFiltered && !hasTimeInRange(al.sample_times, state.outMin, state.outMax)) return false;
+      // Se c'e un prezzo live Ryanair trovato con quei filtri orari, non scartarlo per via del campione statico
+      if (outFiltered && !(liveFare && al.name === "Ryanair")) {
+        if (!hasTimeInRange(al.sample_times, state.outMin, state.outMax)) return false;
+      }
       return true;
     });
     if (!filteredAirlines.length) return null;
 
-    // Filtro orario ritorno: controlla la tratta inversa (r.to -> r.from)
-    let retMatchedTimes = null;
-    if (retFiltered) {
+    if (retFiltered && !liveFare) {
       const rev = routesByPair.get(`${r.to}->${r.from}`);
       if (!rev) return null;
       const matchingRevAirlines = rev.airlines.filter(al => {
@@ -594,14 +728,9 @@ function getMatchingRoutes() {
         return hasTimeInRange(al.sample_times, state.retMin, state.retMax);
       });
       if (!matchingRevAirlines.length) return null;
-      const tSet = new Set();
-      matchingRevAirlines.forEach(al => (al.sample_times || []).forEach(t => {
-        if (hasTimeInRange([t], state.retMin, state.retMax)) tSet.add(t);
-      }));
-      retMatchedTimes = [...tSet].sort();
     }
 
-    return { ...r, airlines: filteredAirlines, _retMatchedTimes: retMatchedTimes };
+    return { ...r, airlines: filteredAirlines, _liveFare: liveFare };
   }).filter(Boolean);
 
   list.forEach(r => {
@@ -615,7 +744,13 @@ function getMatchingRoutes() {
     r._hubAp = dataset.airports[hubCode] || { iata: hubCode, city: hubCode, name: hubCode, country: "" };
   });
 
-  if (state.sortBy === "city") {
+  if (state.sortBy === "price") {
+    list.sort((a, b) => {
+      const pa = a._liveFare ? a._liveFare.totalPrice : 999999;
+      const pb = b._liveFare ? b._liveFare.totalPrice : 999999;
+      return pa - pb || a._otherAp.city.localeCompare(b._otherAp.city, "it");
+    });
+  } else if (state.sortBy === "city") {
     list.sort((a, b) => a._otherAp.city.localeCompare(b._otherAp.city, "it") || a._hubAp.iata.localeCompare(b._hubAp.iata));
   } else if (state.sortBy === "freq") {
     list.sort((a, b) => b._daysCount - a._daysCount || a._otherAp.city.localeCompare(b._otherAp.city, "it"));
@@ -662,7 +797,7 @@ function renderDayFilters() {
   for (let d = 1; d <= 7; d++) {
     const active = state.dayFilters.has(d);
     const btn = document.createElement("button");
-    btn.className = `py-1.5 rounded-lg text-xs font-bold transition border ${
+    btn.className = `py-1 rounded-lg text-xs font-bold transition border ${
       active ? "bg-emerald-600 text-white border-emerald-400"
              : "bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-600 hover:text-white"
     }`;
@@ -700,6 +835,28 @@ function renderTimeSlidersUI() {
   document.getElementById("resetTimesBtn").classList.toggle("hidden", !anyTime);
   document.getElementById("timesAccordionBody").classList.toggle("hidden", !state.timesOpen);
   document.getElementById("timesChevron").textContent = state.timesOpen ? "▲" : "▼";
+}
+
+function renderPriceSearchUI() {
+  const dot = document.getElementById("workerStatusDot");
+  dot.className = state.workerUrl
+    ? "w-2 h-2 rounded-full bg-emerald-400 inline-block"
+    : "w-2 h-2 rounded-full bg-amber-400 inline-block";
+
+  const active = hasLivePrices();
+  document.getElementById("clearPricesBtn").classList.toggle("hidden", !active);
+  document.getElementById("priceSearchStatus").classList.toggle("hidden", !active && !state.isSearchingPrices);
+  document.getElementById("onlyPricedCheckbox").checked = state.onlyPriced;
+  document.getElementById("sortSelect").value = state.sortBy;
+
+  const btnText = document.getElementById("searchPricesBtnText");
+  btnText.textContent = state.isSearchingPrices ? "Ricerca in corso..." : "Cerca prezzi";
+  document.getElementById("searchPricesBtn").disabled = state.isSearchingPrices;
+
+  if (active) {
+    const label = state.liveTripType === "roundTrip" ? "A/R" : "Solo andata";
+    document.getElementById("priceStatusText").textContent = `${state.liveFaresByPair.size} tariffe ${label} trovate`;
+  }
 }
 
 function renderAirlineDropdown() {
@@ -750,6 +907,18 @@ function renderQuotaStatus() {
   }
 }
 
+function getPriceTierClass(priceVal, isRoundTrip) {
+  if (isRoundTrip) {
+    if (priceVal < 60) return "price-cheap";
+    if (priceVal <= 120) return "price-mid";
+    return "price-high";
+  } else {
+    if (priceVal < 35) return "price-cheap";
+    if (priceVal <= 70) return "price-mid";
+    return "price-high";
+  }
+}
+
 function renderRoutesList(routes) {
   const dirLabel = document.getElementById("activeDirectionLabel");
   const titleEl = document.getElementById("activeAirportTitle");
@@ -776,12 +945,12 @@ function renderRoutesList(routes) {
 
   document.getElementById("routeCountBadge").textContent = `${routes.length} ${routes.length === 1 ? "rotta" : "rotte"}`;
 
-  const hasAnyFilter = Boolean(state.airlineFilter || state.dayFilters.size > 0 || isOutTimeFiltered() || isRetTimeFiltered());
+  const hasAnyFilter = Boolean(state.airlineFilter || state.dayFilters.size > 0 || isOutTimeFiltered() || isRetTimeFiltered() || hasLivePrices());
   document.getElementById("resetFiltersBtn").classList.toggle("hidden", !hasAnyFilter);
 
   const listEl = document.getElementById("routesList");
   if (!routes.length) {
-    listEl.innerHTML = `<div class="text-center py-10 px-4 text-slate-400"><div class="text-3xl mb-2">🛫</div><div class="text-sm font-semibold text-slate-200">Nessuna rotta trovata</div><div class="text-xs mt-1">Prova ad allargare gli orari, rimuovere i filtri o cambiare aeroporto.</div></div>`;
+    listEl.innerHTML = `<div class="text-center py-10 px-4 text-slate-400"><div class="text-3xl mb-2">🛫</div><div class="text-sm font-semibold text-slate-200">Nessuna rotta trovata</div><div class="text-xs mt-1">Prova a cambiare date, allargare gli orari o rimuovere i filtri.</div></div>`;
     return;
   }
 
@@ -789,12 +958,24 @@ function renderRoutesList(routes) {
   listEl.innerHTML = "";
   routes.forEach(r => {
     const key = `${r.from}->${r.to}`, selected = state.selectedRouteKey === key, other = r._otherAp;
+    const fare = r._liveFare;
     const card = document.createElement("button");
     card.className = `w-full text-left p-3 rounded-xl border transition ${selected ? "bg-sky-500/15 border-sky-500 shadow-md" : "bg-slate-800/45 border-slate-800 hover:bg-slate-800/90 hover:border-slate-700"}`;
     const dayDots = [1,2,3,4,5,6,7].map(d => `<span class="w-4 h-4 rounded text-[9px] font-bold flex items-center justify-center ${r._allDays.includes(d) ? "bg-emerald-500/25 text-emerald-300 border border-emerald-500/40" : "bg-slate-900 text-slate-600"}">${DAY_SHORT[d]}</span>`).join("");
     const hubBadge = isMultiCity
       ? `<span class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono text-[10px] font-bold shrink-0">${state.mode === "from" ? `da ${r.from}` : `su ${r.to}`}</span>`
       : "";
+
+    let rightTopHtml = `<span class="text-[11px] font-semibold text-slate-400 shrink-0">${r._daysCount}/7 gg</span>`;
+    if (fare) {
+      const tier = getPriceTierClass(fare.totalPrice, state.liveTripType === "roundTrip");
+      rightTopHtml = `<span class="price-pin ${tier} shrink-0" style="cursor:pointer;transform:none;box-shadow:none">${formatEur(fare.totalPrice)}</span>`;
+    }
+
+    const subLineHtml = fare
+      ? `<div class="text-[11px] text-sky-300 font-mono truncate">🛫 ${fare.outDep || "--:--"}${fare.retDep ? ` • 🛬 ${fare.retDep}` : ""}</div>`
+      : `<div class="text-[11px] text-slate-400 truncate">${r.airlines.map(a => a.name).join(", ")}</div>`;
+
     card.innerHTML = `
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-1.5 min-w-0">
@@ -802,10 +983,10 @@ function renderRoutesList(routes) {
           <span class="font-semibold text-sm text-white truncate">${other.city}</span>
           ${hubBadge}
         </div>
-        <span class="text-[11px] font-semibold text-slate-400 shrink-0">${r._daysCount}/7 gg</span>
+        ${rightTopHtml}
       </div>
       <div class="flex items-center justify-between gap-2 mt-2">
-        <div class="text-[11px] text-slate-400 truncate">${r.airlines.map(a => a.name).join(", ")}</div>
+        ${subLineHtml}
         <div class="flex items-center gap-0.5 shrink-0">${dayDots}</div>
       </div>`;
     card.onclick = () => selectRoute(r);
@@ -816,6 +997,7 @@ function renderRoutesList(routes) {
 function renderMap(routes, fitBounds = false) {
   routesLayer.clearLayers();
   markersLayer.clearLayers();
+  pricesLayer.clearLayers();
 
   const selCodes = getSelectedCodes();
   const selSet = new Set(selCodes);
@@ -825,27 +1007,37 @@ function renderMap(routes, fitBounds = false) {
     if (ap && ap.lat != null) boundsPoints.push([ap.lat, ap.lon]);
   });
 
+  // Se in vista "Citta - Tutti" ci sono piu aeroporti di partenza con prezzo verso la stessa destinazione, teniamo il prezzo piu basso sul pin
+  const bestRouteByOtherCode = new Map();
+
   routes.forEach(r => {
     const fromAp = dataset.airports[r.from], toAp = dataset.airports[r.to];
     if (!fromAp || !toAp || fromAp.lat == null || toAp.lat == null) return;
     const isSel = state.selectedRouteKey === `${r.from}->${r.to}`;
+    const hasFare = Boolean(r._liveFare);
     const poly = L.polyline(buildCurvedArc(fromAp, toAp), {
-      color: isSel ? "#38bdf8" : (state.mode === "from" ? "#0ea5e9" : "#10b981"),
-      weight: isSel ? 3.5 : 1.7,
-      opacity: isSel ? 1 : (state.selectedRouteKey ? 0.25 : 0.62),
+      color: isSel ? "#38bdf8" : (hasFare ? "#fbbf24" : (state.mode === "from" ? "#0ea5e9" : "#10b981")),
+      weight: isSel ? 3.5 : (hasFare ? 2.1 : 1.6),
+      opacity: isSel ? 1 : (state.selectedRouteKey ? 0.25 : (hasFare ? 0.78 : 0.55)),
       dashArray: isSel ? "8 10" : null,
       className: isSel ? "route-animated" : ""
     });
     poly.on("click", () => selectRoute(r));
-    poly.on("mouseover", function() { if (!isSel) this.setStyle({ weight: 3, opacity: 0.95 }); });
-    poly.on("mouseout", function() { if (!isSel) this.setStyle({ weight: 1.7, opacity: state.selectedRouteKey ? 0.25 : 0.62 }); });
+    poly.on("mouseover", function() { if (!isSel) this.setStyle({ weight: 3.2, opacity: 0.98 }); });
+    poly.on("mouseout", function() { if (!isSel) this.setStyle({ weight: hasFare ? 2.1 : 1.6, opacity: state.selectedRouteKey ? 0.25 : (hasFare ? 0.78 : 0.55) }); });
     poly.addTo(routesLayer);
+
+    const otherCode = state.mode === "from" ? r.to : r.from;
     const otherAp = state.mode === "from" ? toAp : fromAp;
     boundsPoints.push([otherAp.lat, otherAp.lon]);
+
+    const prevBest = bestRouteByOtherCode.get(otherCode);
+    if (!prevBest || (r._liveFare && (!prevBest._liveFare || r._liveFare.totalPrice < prevBest._liveFare.totalPrice))) {
+      bestRouteByOtherCode.set(otherCode, r);
+    }
   });
 
-  const connectedCodes = new Set();
-  routes.forEach(r => connectedCodes.add(state.mode === "from" ? r.to : r.from));
+  const connectedCodes = new Set(bestRouteByOtherCode.keys());
   const codesToRender = new Set([...BASE_ORDER, ...connectedCodes, ...selCodes]);
 
   codesToRender.forEach(code => {
@@ -854,23 +1046,39 @@ function renderMap(routes, fitBounds = false) {
     const isSelected = selSet.has(code);
     const isBase = Boolean(ap.is_base || BASE_ORDER.includes(code));
     const isConnected = connectedCodes.has(code);
-    const marker = L.circleMarker([ap.lat, ap.lon], {
-      radius: isSelected ? 9 : (isBase ? 6.5 : 5.5),
-      color: isSelected ? "#ffffff" : (isBase ? "#fbbf24" : "#38bdf8"),
-      weight: isSelected ? 3 : 2,
-      fillColor: isSelected ? (state.selectedCityGroup ? "#6366f1" : "#0284c7") : (isBase ? "#f59e0b" : (isConnected ? "#0ea5e9" : "#475569")),
-      fillOpacity: isSelected ? 1 : (isConnected || isBase ? 0.92 : 0.45)
-    });
-    marker.bindTooltip(`${ap.iata} • ${ap.city}`, { direction: "top", offset: [0, -8], className: "ap-tooltip" });
-    marker.on("click", () => {
-      if (isSelected && !state.selectedCityGroup) return;
-      if (isConnected) {
-        const match = routes.find(r => (state.mode === "from" ? r.to === code : r.from === code));
-        if (match) { selectRoute(match); return; }
-      }
-      selectAirport(code, true);
-    });
-    marker.addTo(markersLayer);
+    const matchedRoute = bestRouteByOtherCode.get(code);
+    const liveFare = matchedRoute?._liveFare || null;
+
+    if (liveFare && !isSelected) {
+      // Disegna direttamente il pill-badge con il prezzo live sul pallino della mappa!
+      const tier = getPriceTierClass(liveFare.totalPrice, state.liveTripType === "roundTrip");
+      const isRouteSel = state.selectedRouteKey === `${matchedRoute.from}->${matchedRoute.to}`;
+      const icon = L.divIcon({
+        className: "",
+        html: `<div class="price-pin ${tier} ${isRouteSel ? "selected" : ""}">${formatEur(liveFare.totalPrice)}</div>`,
+        iconSize: null,
+        iconAnchor: [26, 12]
+      });
+      const priceMarker = L.marker([ap.lat, ap.lon], { icon, zIndexOffset: isRouteSel ? 1000 : 500 });
+      priceMarker.bindTooltip(`${ap.iata} • ${ap.city} (${matchedRoute.from}→${matchedRoute.to})`, { direction: "top", offset: [0, -10], className: "ap-tooltip" });
+      priceMarker.on("click", () => selectRoute(matchedRoute));
+      priceMarker.addTo(pricesLayer);
+    } else {
+      const marker = L.circleMarker([ap.lat, ap.lon], {
+        radius: isSelected ? 9 : (isBase ? 6.5 : 5.5),
+        color: isSelected ? "#ffffff" : (isBase ? "#fbbf24" : "#38bdf8"),
+        weight: isSelected ? 3 : 2,
+        fillColor: isSelected ? (state.selectedCityGroup ? "#6366f1" : "#0284c7") : (isBase ? "#f59e0b" : (isConnected ? "#0ea5e9" : "#475569")),
+        fillOpacity: isSelected ? 1 : (isConnected || isBase ? 0.92 : 0.4)
+      });
+      marker.bindTooltip(`${ap.iata} • ${ap.city}`, { direction: "top", offset: [0, -8], className: "ap-tooltip" });
+      marker.on("click", () => {
+        if (isSelected && !state.selectedCityGroup) return;
+        if (matchedRoute) { selectRoute(matchedRoute); return; }
+        selectAirport(code, true);
+      });
+      marker.addTo(markersLayer);
+    }
   });
 
   if (fitBounds && boundsPoints.length > 1) map.fitBounds(boundsPoints, { padding: [55, 55], maxZoom: 6 });
@@ -899,6 +1107,39 @@ function renderRouteDetail() {
   const list = document.getElementById("detailAirlinesList");
   list.innerHTML = "";
 
+  // 1) Box Prezzo Live Ryanair (se disponibile per questa tratta)
+  const liveFare = state.liveFaresByPair.get(`${route.from}->${route.to}`);
+  if (liveFare) {
+    const ryanUrl = buildRyanairBookingUrl(route.from, route.to, state.priceOutDate, state.priceRetDate);
+    const isRT = state.liveTripType === "roundTrip";
+    const fareCard = document.createElement("div");
+    fareCard.className = "p-3.5 rounded-xl bg-gradient-to-br from-amber-500/20 via-sky-500/15 to-slate-900 border border-amber-400/50 space-y-2.5";
+    fareCard.innerHTML = `
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <div class="text-[10px] font-bold uppercase tracking-wider text-amber-300">Tariffa Live Ryanair (${isRT ? "Andata + Ritorno" : "Solo Andata"})</div>
+          <div class="text-xl font-extrabold text-white font-mono mt-0.5">${formatEur(liveFare.totalPrice)}</div>
+        </div>
+        <a href="${ryanUrl}" target="_blank" rel="noopener noreferrer"
+           class="px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-lg transition shrink-0">
+          Prenota Ryanair ↗
+        </a>
+      </div>
+      <div class="space-y-1.5 text-xs border-t border-slate-700/70 pt-2">
+        <div class="flex items-center justify-between text-slate-200">
+          <span>🛫 <strong>${state.priceOutDate}</strong> • ${route.from} ${liveFare.outDep || "--:--"} → ${route.to} ${liveFare.outArr || "--:--"}</span>
+          <span class="font-mono text-sky-300 font-semibold">${liveFare.outPrice != null ? formatEur(liveFare.outPrice) : ""}</span>
+        </div>
+        ${isRT && liveFare.retDep ? `
+        <div class="flex items-center justify-between text-slate-200">
+          <span>🛬 <strong>${state.priceRetDate}</strong> • ${route.to} ${liveFare.retDep} → ${route.from} ${liveFare.retArr || "--:--"}</span>
+          <span class="font-mono text-emerald-300 font-semibold">${liveFare.retPrice != null ? formatEur(liveFare.retPrice) : ""}</span>
+        </div>` : ""}
+      </div>`;
+    list.appendChild(fareCard);
+  }
+
+  // 2) Compagnie e giorni/orari operativi
   route.airlines.forEach(al => {
     const badges = [1,2,3,4,5,6,7].map(d => `<span class="px-2 py-1 rounded-md text-[11px] font-bold text-center ${al.days.includes(d) ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-slate-950 text-slate-600 border border-slate-800/80"}">${DAY_LABEL[d]}</span>`).join("");
     const timesHtml = (al.sample_times && al.sample_times.length)
@@ -921,28 +1162,54 @@ function renderRouteDetail() {
     list.appendChild(row);
   });
 
-  // Riepilogo compatto degli orari di ritorno (se presente tratta inversa in cache)
-  const rev = routesByPair.get(`${route.to}->${route.from}`);
-  if (rev && rev.airlines && rev.airlines.length) {
-    const retAllTimes = new Set();
-    rev.airlines.forEach(al => {
-      if (!state.airlineFilter || al.name === state.airlineFilter) {
-        (al.sample_times || []).forEach(t => retAllTimes.add(t));
+  // 3) Orari ritorno in cache (se non gia mostrati nel card live sopra)
+  if (!liveFare) {
+    const rev = routesByPair.get(`${route.to}->${route.from}`);
+    if (rev && rev.airlines && rev.airlines.length) {
+      const retAllTimes = new Set();
+      rev.airlines.forEach(al => {
+        if (!state.airlineFilter || al.name === state.airlineFilter) {
+          (al.sample_times || []).forEach(t => retAllTimes.add(t));
+        }
+      });
+      const sortedRet = [...retAllTimes].sort();
+      if (sortedRet.length) {
+        const retBox = document.createElement("div");
+        retBox.className = "p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30";
+        retBox.innerHTML = `
+          <div class="text-[11px] font-semibold text-emerald-300 mb-1.5">↩️ Orari ritorno (${route.to} → ${route.from})</div>
+          <div class="flex flex-wrap gap-1.5">${sortedRet.map(t => {
+            const ok = !retFiltered || hasTimeInRange([t], state.retMin, state.retMax);
+            return `<span class="px-2 py-0.5 rounded border text-[11px] font-mono ${ok ? "bg-slate-950 border-emerald-500/50 text-emerald-200" : "bg-slate-950/40 border-slate-800 text-slate-600 line-through"}">🕒 ${t}</span>`;
+          }).join("")}</div>`;
+        list.appendChild(retBox);
       }
-    });
-    const sortedRet = [...retAllTimes].sort();
-    if (sortedRet.length) {
-      const retBox = document.createElement("div");
-      retBox.className = "p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30";
-      retBox.innerHTML = `
-        <div class="text-[11px] font-semibold text-emerald-300 mb-1.5">↩️ Orari ritorno (${route.to} → ${route.from})</div>
-        <div class="flex flex-wrap gap-1.5">${sortedRet.map(t => {
-          const ok = !retFiltered || hasTimeInRange([t], state.retMin, state.retMax);
-          return `<span class="px-2 py-0.5 rounded border text-[11px] font-mono ${ok ? "bg-slate-950 border-emerald-500/50 text-emerald-200" : "bg-slate-950/40 border-slate-800 text-slate-600 line-through"}">🕒 ${t}</span>`;
-        }).join("")}</div>`;
-      list.appendChild(retBox);
     }
   }
+
+  // 4) Opzione B: Link diretti precompilati per tutte le compagnie (Google Flights, Skyscanner, AZair)
+  const links = buildExternalSearchLinks(route.from, route.to, state.priceOutDate, state.priceRetDate);
+  const extBox = document.createElement("div");
+  extBox.className = "pt-2 border-t border-slate-800";
+  extBox.innerHTML = `
+    <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+      Confronta prezzi tutte le compagnie ${state.priceOutDate ? `(${state.priceOutDate}${state.priceRetDate ? ` → ${state.priceRetDate}` : ""})` : ""}
+    </div>
+    <div class="grid grid-cols-3 gap-1.5 text-center">
+      <a href="${links.googleFlights}" target="_blank" rel="noopener noreferrer"
+         class="py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] font-semibold text-sky-300 transition">
+        Google Flights ↗
+      </a>
+      <a href="${links.skyscanner}" target="_blank" rel="noopener noreferrer"
+         class="py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] font-semibold text-cyan-300 transition">
+        Skyscanner ↗
+      </a>
+      <a href="${links.azair}" target="_blank" rel="noopener noreferrer"
+         class="py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] font-semibold text-emerald-300 transition">
+        AZair ↗
+      </a>
+    </div>`;
+  list.appendChild(extBox);
 
   card.classList.remove("hidden");
 }
@@ -951,12 +1218,98 @@ function renderAll(fitBounds = false) {
   renderBasePills();
   renderDayFilters();
   renderTimeSlidersUI();
+  renderPriceSearchUI();
   renderAirlineDropdown();
   renderQuotaStatus();
   const routes = getMatchingRoutes();
   renderRoutesList(routes);
   renderMap(routes, fitBounds);
   renderRouteDetail();
+}
+
+// ==================== RICERCA PREZZI LIVE RYANAIR ====================
+async function executeLiveRyanairSearch() {
+  if (!state.workerUrl) {
+    openWorkerModal();
+    return;
+  }
+
+  const outDate = document.getElementById("priceOutDate").value;
+  const retDate = document.getElementById("priceRetDate").value;
+  if (!outDate) {
+    alert("Seleziona almeno la Data di Andata prima di cercare i prezzi.");
+    document.getElementById("priceOutDate").focus();
+    return;
+  }
+  if (retDate && retDate < outDate) {
+    alert("La data di ritorno non può essere precedente alla data di andata.");
+    return;
+  }
+
+  // Se l'utente era in modalita "Arrivo a", la ricerca prezzi A/R parte dall'aeroporto selezionato
+  if (state.mode !== "from") {
+    state.mode = "from";
+    document.getElementById("modeFromBtn").className = "py-1 text-xs font-semibold rounded-lg transition bg-sky-600 text-white shadow";
+    document.getElementById("modeToBtn").className = "py-1 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white";
+  }
+
+  const origins = getSelectedCodes();
+  if (!origins.length) return;
+
+  state.priceOutDate = outDate;
+  state.priceRetDate = retDate;
+  state.isSearchingPrices = true;
+  state.selectedRouteKey = null;
+  renderPriceSearchUI();
+
+  try {
+    const qs = new URLSearchParams({
+      origins: origins.join(","),
+      outDate,
+      outTimeFrom: formatMinutes(state.outMin),
+      outTimeTo: formatMinutes(state.outMax),
+    });
+    if (retDate) {
+      qs.set("retDate", retDate);
+      qs.set("retTimeFrom", formatMinutes(state.retMin));
+      qs.set("retTimeTo", formatMinutes(state.retMax));
+    }
+
+    const resp = await fetch(`${state.workerUrl}?${qs.toString()}`);
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) {
+      throw new Error(data.error || `Errore HTTP ${resp.status}`);
+    }
+
+    const mapFares = new Map();
+    for (const f of (data.fares || [])) {
+      const k = `${f.from}->${f.to}`;
+      const existing = mapFares.get(k);
+      if (!existing || f.totalPrice < existing.totalPrice) {
+        mapFares.set(k, f);
+      }
+    }
+
+    state.liveFaresByPair = mapFares;
+    state.liveTripType = data.tripType || (retDate ? "roundTrip" : "oneWay");
+    if (mapFares.size > 0) {
+      state.sortBy = "price";
+    } else {
+      alert("Nessun volo Ryanair trovato per le date e fasce orarie selezionate.");
+    }
+  } catch (err) {
+    alert(`Impossibile recuperare i prezzi live Ryanair:\n${err.message}\n\nVerifica l'URL del Cloudflare Worker in "Configura ponte".`);
+  } finally {
+    state.isSearchingPrices = false;
+    renderAll(true);
+  }
+}
+
+function clearLivePrices() {
+  state.liveFaresByPair.clear();
+  state.liveTripType = null;
+  if (state.sortBy === "price") state.sortBy = "city";
+  renderAll(false);
 }
 
 // ==================== AZIONI UTENTE ====================
@@ -966,6 +1319,9 @@ function selectAirport(code, fitBounds = true) {
   state.selectedCityGroup = null;
   state.selectedRouteKey = null;
   state.airlineFilter = "";
+  state.liveFaresByPair.clear();
+  state.liveTripType = null;
+  if (state.sortBy === "price") state.sortBy = "city";
   renderAll(fitBounds);
 }
 
@@ -975,6 +1331,9 @@ function selectCityGroup(cityName, fitBounds = true) {
   state.selectedAirport = null;
   state.selectedRouteKey = null;
   state.airlineFilter = "";
+  state.liveFaresByPair.clear();
+  state.liveTripType = null;
+  if (state.sortBy === "price") state.sortBy = "city";
   renderAll(fitBounds);
 }
 
@@ -984,21 +1343,19 @@ function selectRoute(route) {
   if (window.innerWidth < 768) document.getElementById("sidebar").classList.add("-translate-x-full");
 }
 
-// Mode buttons
 document.getElementById("modeFromBtn").onclick = () => {
   state.mode = "from"; state.selectedRouteKey = null;
-  document.getElementById("modeFromBtn").className = "py-1.5 text-xs font-semibold rounded-lg transition bg-sky-600 text-white shadow";
-  document.getElementById("modeToBtn").className = "py-1.5 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white";
+  document.getElementById("modeFromBtn").className = "py-1 text-xs font-semibold rounded-lg transition bg-sky-600 text-white shadow";
+  document.getElementById("modeToBtn").className = "py-1 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white";
   renderAll(true);
 };
 document.getElementById("modeToBtn").onclick = () => {
   state.mode = "to"; state.selectedRouteKey = null;
-  document.getElementById("modeToBtn").className = "py-1.5 text-xs font-semibold rounded-lg transition bg-emerald-600 text-white shadow";
-  document.getElementById("modeFromBtn").className = "py-1.5 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white";
+  document.getElementById("modeToBtn").className = "py-1 text-xs font-semibold rounded-lg transition bg-emerald-600 text-white shadow";
+  document.getElementById("modeFromBtn").className = "py-1 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white";
   renderAll(true);
 };
 
-// Sliders Orari Andata & Ritorno
 document.getElementById("toggleTimesAccordion").onclick = (e) => {
   if (e.target.id === "resetTimesBtn") return;
   state.timesOpen = !state.timesOpen;
@@ -1030,6 +1387,45 @@ function wireDualSlider(minElId, maxElId, minKey, maxKey) {
 wireDualSlider("outMinRange", "outMaxRange", "outMin", "outMax");
 wireDualSlider("retMinRange", "retMaxRange", "retMin", "retMax");
 
+// Price search bindings
+document.getElementById("priceOutDate").addEventListener("change", e => {
+  state.priceOutDate = e.target.value;
+  const retEl = document.getElementById("priceRetDate");
+  if (state.priceOutDate) {
+    retEl.min = state.priceOutDate;
+    if (retEl.value && retEl.value < state.priceOutDate) {
+      retEl.value = state.priceOutDate;
+      state.priceRetDate = state.priceOutDate;
+    }
+  }
+  renderRouteDetail();
+});
+document.getElementById("priceRetDate").addEventListener("change", e => {
+  state.priceRetDate = e.target.value;
+  renderRouteDetail();
+});
+document.getElementById("searchPricesBtn").onclick = executeLiveRyanairSearch;
+document.getElementById("clearPricesBtn").onclick = clearLivePrices;
+document.getElementById("onlyPricedCheckbox").onchange = e => { state.onlyPriced = e.target.checked; renderAll(false); };
+
+// Worker Modal bindings
+function openWorkerModal() {
+  document.getElementById("workerUrlInput").value = state.workerUrl;
+  document.getElementById("workerModal").classList.remove("hidden");
+}
+document.getElementById("openWorkerConfigBtn").onclick = openWorkerModal;
+document.getElementById("closeWorkerModal").onclick = () => document.getElementById("workerModal").classList.add("hidden");
+document.getElementById("cancelWorkerBtn").onclick = () => document.getElementById("workerModal").classList.add("hidden");
+document.getElementById("workerModal").onclick = e => { if (e.target.id === "workerModal") document.getElementById("workerModal").classList.add("hidden"); };
+document.getElementById("saveWorkerBtn").onclick = () => {
+  const val = document.getElementById("workerUrlInput").value.trim().replace(/\/+$/, "");
+  state.workerUrl = val;
+  if (val) localStorage.setItem(WORKER_STORAGE_KEY, val);
+  else localStorage.removeItem(WORKER_STORAGE_KEY);
+  document.getElementById("workerModal").classList.add("hidden");
+  renderPriceSearchUI();
+};
+
 document.getElementById("airlineFilter").onchange = e => { state.airlineFilter = e.target.value; state.selectedRouteKey = null; renderAll(false); };
 document.getElementById("sortSelect").onchange = e => { state.sortBy = e.target.value; renderAll(false); };
 document.getElementById("resetDaysBtn").onclick = () => { state.dayFilters.clear(); renderAll(false); };
@@ -1038,7 +1434,7 @@ document.getElementById("resetFiltersBtn").onclick = () => {
   state.dayFilters.clear();
   state.outMin = 0; state.outMax = 1440;
   state.retMin = 0; state.retMax = 1440;
-  renderAll(false);
+  clearLivePrices();
 };
 document.getElementById("closeDetailBtn").onclick = () => { state.selectedRouteKey = null; renderAll(false); };
 document.getElementById("reverseRouteBtn").onclick = () => {
@@ -1049,8 +1445,8 @@ document.getElementById("reverseRouteBtn").onclick = () => {
     state.selectedAirport = toCode;
     state.selectedCityGroup = null;
     state.mode = "from";
-    document.getElementById("modeFromBtn").className = "py-1.5 text-xs font-semibold rounded-lg transition bg-sky-600 text-white shadow";
-    document.getElementById("modeToBtn").className = "py-1.5 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white";
+    document.getElementById("modeFromBtn").className = "py-1 text-xs font-semibold rounded-lg transition bg-sky-600 text-white shadow";
+    document.getElementById("modeToBtn").className = "py-1 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white";
     state.selectedRouteKey = `${toCode}->${fromCode}`;
     renderAll(false);
   } else alert(`Nessun volo di ritorno diretto trovato in cache da ${toCode} a ${fromCode}.`);
@@ -1071,7 +1467,6 @@ searchInput.addEventListener("input", () => {
   clearSearchBtn.classList.toggle("hidden", !q);
   if (!q) { searchDropdown.classList.add("hidden"); return; }
 
-  // 1) Gruppi citta multi-aeroporto corrispondenti (es. "Bruxelles - Tutti")
   const matchedGroups = [];
   for (const [cityName, codes] of cityGroups.entries()) {
     const nameMatch = cityName.toLowerCase().includes(q);
@@ -1079,13 +1474,10 @@ searchInput.addEventListener("input", () => {
       const ap = dataset.airports[c];
       return ap && (c.toLowerCase().includes(q) || (ap.city || "").toLowerCase().includes(q) || (ap.name || "").toLowerCase().includes(q));
     });
-    if (nameMatch || apMatch) {
-      matchedGroups.push({ cityName, codes });
-    }
+    if (nameMatch || apMatch) matchedGroups.push({ cityName, codes });
   }
   matchedGroups.sort((a, b) => a.cityName.localeCompare(b.cityName, "it"));
 
-  // 2) Singoli aeroporti corrispondenti
   const matches = Object.values(dataset.airports)
     .filter(ap => ap.iata.toLowerCase().includes(q) || (ap.city || "").toLowerCase().includes(q) || (ap.name || "").toLowerCase().includes(q))
     .sort((a, b) => (b.is_base ? 1 : 0) - (a.is_base ? 1 : 0) || (a.city || "").localeCompare(b.city || "", "it"))
@@ -1175,6 +1567,11 @@ function applyLoadedJson(data) {
 }
 
 async function tryAutoLoadJson() {
+  // Imposta data minima odierna nei selettori
+  const todayIso = new Date().toISOString().slice(0, 10);
+  document.getElementById("priceOutDate").min = todayIso;
+  document.getElementById("priceRetDate").min = todayIso;
+
   try {
     const resp = await fetch("./routes.json?t=" + Date.now(), { cache: "no-store" });
     if (!resp.ok) throw new Error("not found");
